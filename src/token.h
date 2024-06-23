@@ -2,7 +2,6 @@
 #define TOKEN_H
 
 #include <stddef.h>
-#include <stdbool.h>
 
 enum {
     UNKNOWN,
@@ -66,6 +65,7 @@ enum {
     CHAR,
     STRING,
     FSTRING,
+    RSTRING,
     SPACE,
     _INDENT,
     _DEDENT,
@@ -76,17 +76,10 @@ typedef struct {
     int type;
     int line;
     int col;
-    bool is_continues;
-    bool is_wide;
     size_t len;
-    union {
-        char *data;
-        wchar_t *wdata;
-    };
+    char *data;
 } Token;
 
 Token make_token(const int type, const int line, const int col);
-
-Token make_wtoken(const int type, const int line, const int col);
 
 #endif //TOKEN_H

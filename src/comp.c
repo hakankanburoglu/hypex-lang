@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <stdbool.h>
-#include <wchar.h>
 
 #include "token.h"
 #include "lex.h"
@@ -69,25 +68,39 @@ void print_token(const Token tok) {
         case CHAR: printf("CHAR"); break;
         case STRING: printf("STRING"); break;
         case FSTRING: printf("FSTRING"); break;
+        case RSTRING: printf("RSTRING"); break;
         case SPACE: printf("SPACE"); break;
         case _INDENT: printf("_INDENT"); break;
         case _DEDENT: printf("_DEDENT"); break;
         case EOL: printf("EOL"); break;
         default: printf("%d", tok.type); break;
     };
-    printf(", %d, %d, %d, `", tok.is_continues, tok.is_wide, tok.len);
-    if (!tok.is_wide && tok.data != NULL)
+    printf(", %d, `", (int)tok.len);
+    if (tok.data != NULL)
         printf("%s", tok.data);
-    printf("`, `");
-    if (tok.is_wide && tok.wdata != NULL)
-        wprintf(L"%ls", tok.wdata);
     printf("`\n");
 }
 
 void print_lex(const Token *tokens, const size_t len) {
-    printf("line, col, type, is_continues, is_wide, len, data, wdata\n");
+    printf("line, col, type, len, data\n");
     for (int i = 0; i < len; i++)
         print_token(tokens[i]);
+}
+
+void push_indent(int **indents, int *indentlen, const int indent) {
+    *indents = (int *)realloc(*indents, (*indentlen + 1) * sizeof(int));
+    if (*indents == NULL)
+        error(ERR_LEX_MSG, "4", NULL);
+    (*indents)[(*indentlen)++] = indent;
+}
+
+void concat_token(Token **tokens, size_t *toklen, const Token *buf, const size_t buflen) {
+    *tokens = (Token *)realloc(*tokens, (*toklen + buflen) * sizeof(Token));
+    if (*tokens == NULL)
+        error(ERR_LEX_MSG, "5", NULL);
+    for (int i = 0; i < buflen; i++)
+        (*tokens)[*toklen + i] = buf[i];
+    *toklen += buflen;
 }
 
 void comp(const char *path) {
@@ -98,39 +111,36 @@ void comp(const char *path) {
     size_t inputlen = 0;
     Token *tokens = NULL;
     size_t toklen = 0;
-    int last_indent = 0;
-    bool is_continues = false;
+    int *indents = (int *)malloc(sizeof(int));
+    indents[0] = 0;
+    int indentlen = 1;
+    bool start_block = false;
     int line = 0;
     long read;
     while ((read = getline(&input, &inputlen, file)) != -1) {
+        int current = 0;
         if (read > 0 && input[read - 1] == '\n')
             input[read - 1] = '\0';
-        if (inputlen > 0) {
-            int current = 0;
-            while (input[current] == ' ') {
+        if (!start_block) {
+            while (input[current] == ' ')
                 current++;
-            }
-            if (current > last_indent) {
+            if (current > indents[indentlen - 1]) {
                 Token tok = make_token(_INDENT, line, 0);
                 tok.len = current;
                 push_token(&tokens, &toklen, tok);
-                last_indent = current;
+                push_indent(&indents, &indentlen, current);
             }
-            if (current < last_indent) {
+            if (current < indents[indentlen - 1]) {
                 Token tok = make_token(_DEDENT, line, 0);
                 tok.len = current;
                 push_token(&tokens, &toklen, tok);
-                last_indent = current;
+                push_indent(&indents, &indentlen, current);
             }
-            size_t buflen = 0;
-            Token *buf = tokenize(input, &buflen, is_continues, line, current);
-            is_continues = buf[buflen - 1].is_continues;
-            tokens = (Token *)realloc(tokens, (toklen + buflen + 1) * sizeof(Token));
-            for (int i = 0; i < buflen; i++)
-                tokens[toklen + i] = buf[i];
-            toklen += buflen;
-            push_token(&tokens, &toklen, make_token(EOL, line, current + buflen));
         }
+        size_t buflen = 0;
+        Token *buf = tokenize(input, &buflen, &start_block, line, current);
+        concat_token(&tokens, &toklen, buf, buflen);
+        free(buf);
         line++;
     }
     free(input);

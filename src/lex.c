@@ -8,7 +8,7 @@
 #include "lex.h"
 #include "error.h"
 
-#define KWLEN 41
+#define KWLEN 40
 
 const char *KW[KWLEN] = {
     "if",
@@ -16,8 +16,7 @@ const char *KW[KWLEN] = {
     "base","bool","case","char","elif","else","enum","func","long","null","self","true","uint",
     "async","await","break","catch","class","const","false","float","short","throw","ulong","while",
     "double","object","return","string","struct","switch","ushort",
-    "continue",
-    "interface"
+    "continue"
 };
 
 void push_token(Token **tokens, size_t *len, const Token tok) {
@@ -50,27 +49,6 @@ void consume_token(Token *tok, const char c) {
     }
 }
 
-void consume_wtoken(Token *tok, const wchar_t c) {
-    if (tok->wdata == NULL) {
-        tok->wdata = (wchar_t *)realloc(tok->wdata, 2 * sizeof(wchar_t));
-        if (tok->wdata == NULL) {
-            error(ERR_LEX_MSG, "4", NULL);
-            return;
-        }
-        tok->len = 1;
-        tok->wdata[0] = c;
-        tok->wdata[1] = L'\0';
-    } else {
-        tok->wdata[tok->len++] = c;
-        tok->wdata = (wchar_t *)realloc(tok->wdata, (tok->len + 1) * sizeof(wchar_t));
-        if (tok->wdata == NULL) {
-            error(ERR_LEX_MSG, "5", NULL);
-            return;
-        }
-        tok->wdata[tok->len] = L'\0';
-    }
-}
-
 bool is_keyword(const char *s, const size_t len) {
     switch (len) {
         case 2:
@@ -97,8 +75,6 @@ bool is_keyword(const char *s, const size_t len) {
             return false;
         case 8:
             return strcmp(KW[39], s) == 0;
-        case 9:
-            return strcmp(KW[40], s) == 0;
         default:
             return false;
     }
@@ -108,36 +84,91 @@ bool is_ident_body(const char c) {
     return isalnum(c) || c == '_';
 }
 
-Token *tokenize(const char *input, size_t *len, const bool is_continues, const int line, int current) {
+Token *tokenize(const char *input, size_t *len, bool *start_block, const int line, int current) {
     Token *tokens = NULL;
     *len = 0;
     const size_t inputlen = strlen(input);
+    bool potential_fstring = false;
+    bool potential_rstring = false;
     while (current < inputlen) {
         Token buf = make_token(UNKNOWN, line, current);
-        if (current == 0 && is_continues) {
-            buf = make_wtoken(COMMENT_BLOCK, line, current);
-            buf.is_continues = true;
-            while (is_continues) {
+        if (current == 0 && *start_block) {
+            buf.type = COMMENT_BLOCK;
+            while (current < inputlen) {
                 if (input[current] == '*') {
                     current++;
-                    if (input[current] == '/') {
-                        current++;
-                        // is_continues = false;
-                    } else {
-                        consume_wtoken(&buf, input[current]);
+                    if (current < inputlen) {
+                        if (input[current] == '/') {
+                            current++;
+                            *start_block = false;
+                            break;
+                        } else {
+                            consume_token(&buf, input[current]);
+                        }
                     }
                 } else {
-                    consume_wtoken(&buf, input[current]);
+                    consume_token(&buf, input[current]);
+                }
+                current++;
+            }
+            push_token(&tokens, len, buf);
+            buf = make_token(UNKNOWN, line, current);
+            if (current >= inputlen)
+                break;
+        }
+        if (potential_fstring && input[current] == '"') {
+            buf.type = FSTRING;
+            buf.line = tokens[*len - 1].line;
+            buf.col = tokens[*len - 1].col;
+            current++;
+            bool escape_string = false;
+            while (current < inputlen && !(input[current] == '"' && !escape_string)) {
+                if (input[current] == '\\') {
+                    escape_string = true;
+                    consume_token(&buf, input[current]);
+                    current++;
+                }
+                if (current < inputlen) {
+                    consume_token(&buf, input[current]);
+                    current++;
+                    if (escape_string)
+                        escape_string = false;
                 }
             }
+            current++;
+            potential_fstring = false;
+            tokens[*len - 1] = buf;
+            buf = make_token(UNKNOWN, line, current);
+            if (current >= inputlen)
+                break;
+        }
+        if (potential_rstring && input[current] == '"') {
+            buf.type = RSTRING;
+            buf.line = tokens[*len - 1].line;
+            buf.col = tokens[*len - 1].col;
+            current++;
+            while (current < inputlen && input[current] != '"') {
+                consume_token(&buf, input[current]);
+                current++;
+            }
+            current++;
+            potential_rstring = false;
+            tokens[*len - 1] = buf;
+            buf = make_token(UNKNOWN, line, current);
+            if (current >= inputlen)
+                break;
         }
         switch (input[current]) {
             case '=':
                 buf.type = EQUAL;
                 current++;
-                if (current < inputlen && input[current] == '=') {
-                    buf.type = TWO_EQ;
-                    current++;
+                if (current < inputlen) {
+                    switch (input[current]) {
+                        case '=':
+                            buf.type = TWO_EQ;
+                            current++;
+                            break;
+                    }
                 }
                 break;
             case '+':
@@ -175,9 +206,13 @@ Token *tokenize(const char *input, size_t *len, const bool is_continues, const i
             case '*':
                 buf.type = STAR;
                 current++;
-                if (current < inputlen && input[current] == '=') {
-                    buf.type = STAR_EQ;
-                    current++;
+                if (current < inputlen) {
+                    switch (input[current]) {
+                        case '=':
+                            buf.type = STAR_EQ;
+                            current++;
+                            break;
+                    }
                 }
                 break;
             case '/':
@@ -190,30 +225,32 @@ Token *tokenize(const char *input, size_t *len, const bool is_continues, const i
                             current++;
                             break;
                         case '/':
-                            buf = make_wtoken(COMMENT_LINE, line, current);
+                            buf.type = COMMENT_LINE;
                             current++;
                             while (current < inputlen) {
-                                consume_wtoken(&buf, input[current]);
+                                consume_token(&buf, input[current]);
                                 current++;
                             }
                             break;
                         case '*':
-                            buf = make_wtoken(COMMENT_BLOCK, line, current);
-                            buf.is_continues = true;
+                            buf.type = COMMENT_BLOCK;
                             current++;
+                            *start_block = true;
                             while (current < inputlen) {
                                 if (input[current] == '*') {
                                     current++;
-                                    if (current < inputlen && input[current] == '/') {
-                                        buf.is_continues = false;
-                                        current++;
-                                        break;
+                                    if (current < inputlen) {
+                                        if (input[current] == '/') {
+                                            *start_block = false;
+                                            current++;
+                                            break;
+                                        } else {
+                                            consume_token(&buf, input[current]);
+                                            current++;
+                                        }
                                     }
-                                    consume_wtoken(&buf, L'*');
-                                    consume_wtoken(&buf, input[current]);
-                                    current++;
                                 } else {
-                                    consume_wtoken(&buf, input[current]);
+                                    consume_token(&buf, input[current]);
                                     current++;
                                 }
                             }
@@ -233,6 +270,14 @@ Token *tokenize(const char *input, size_t *len, const bool is_continues, const i
                         case '<':
                             buf.type = LSHIFT;
                             current++;
+                            if (current < inputlen) {
+                                switch (input[current]) {
+                                    case '=':
+                                        buf.type = LSHIFT_EQ;
+                                        current++;
+                                        break;
+                                }
+                            }
                             break;
                     }
                 }
@@ -249,6 +294,14 @@ Token *tokenize(const char *input, size_t *len, const bool is_continues, const i
                         case '>':
                             buf.type = RSHIFT;
                             current++;
+                            if (current < inputlen) {
+                                switch (input[current]) {
+                                    case '=':
+                                        buf.type = RSHIFT_EQ;
+                                        current++;
+                                        break;
+                                }
+                            }
                             break;
                     }
                 }
@@ -288,17 +341,25 @@ Token *tokenize(const char *input, size_t *len, const bool is_continues, const i
             case '!':
                 buf.type = EXCLAMATION;
                 current++;
-                if (current < inputlen && input[current] == '=') {
-                    buf.type = EXCLAMATION_EQ;
-                    current++;
+                if (current < inputlen) {
+                    switch (input[current]) {
+                        case '=':
+                            buf.type = EXCLAMATION_EQ;
+                            current++;
+                            break;
+                    }
                 }
                 break;
             case '%':
                 buf.type = PERCENT;
                 current++;
-                if (current < inputlen && input[current] == '=') {
-                    buf.type = PERCENT_EQ;
-                    current++;
+                if (current < inputlen) {
+                    switch (input[current]) {
+                        case '=':
+                            buf.type = PERCENT_EQ;
+                            current++;
+                            break;
+                    }
                 }
                 break;
             case '.':
@@ -366,9 +427,13 @@ Token *tokenize(const char *input, size_t *len, const bool is_continues, const i
             case '^':
                 buf.type = CARET;
                 current++;
-                if (current < inputlen && input[current] == '=') {
-                    buf.type = CARET_EQ;
-                    current++;
+                if (current < inputlen) {
+                    switch (input[current]) {
+                        case '=':
+                            buf.type = CARET_EQ;
+                            current++;
+                            break;
+                    }
                 }
                 break;
             case '@':
@@ -389,6 +454,42 @@ Token *tokenize(const char *input, size_t *len, const bool is_continues, const i
                 }
                 break;
             case '\'':
+                buf.type = CHAR;
+                current++;
+                bool escape_char = false;
+                while (current < inputlen && !(input[current] == '\'' && !escape_char)) {
+                    if (input[current] == '\\') {
+                        escape_char = true;
+                        consume_token(&buf, input[current]);
+                        current++;
+                    }
+                    if (current < inputlen) {
+                        consume_token(&buf, input[current]);
+                        current++;
+                        if (escape_char)
+                            escape_char = false;
+                    }
+                }
+                current++;
+                break;
+            case '"':
+                buf.type = STRING;
+                current++;
+                bool escape_string = false;
+                while (current < inputlen && !(input[current] == '"' && !escape_string)) {
+                    if (input[current] == '\\') {
+                        escape_string = true;
+                        consume_token(&buf, input[current]);
+                        current++;
+                    }
+                    if (current < inputlen) {
+                        consume_token(&buf, input[current]);
+                        current++;
+                        if (escape_string)
+                            escape_string = false;
+                    }
+                }
+                current++;
                 break;
             default:
                 if (isdigit(input[current])) {
@@ -416,9 +517,12 @@ Token *tokenize(const char *input, size_t *len, const bool is_continues, const i
         }
         if (buf.type == IDENT && is_keyword(buf.data, buf.len))
             buf.type = KEYWORD;
-        if (buf.len == 0)
-            buf.len = 1;
+        if (buf.type == IDENT && strcmp(buf.data, "f") == 0)
+            potential_fstring = true;
+        if (buf.type == IDENT && strcmp(buf.data, "r") == 0)
+            potential_rstring = true;
         push_token(&tokens, len, buf);
     }
+    push_token(&tokens, len, make_token(EOL, line, current));
     return tokens;
 }
