@@ -10,6 +10,8 @@ void push_token(Token **tokens, size_t *len, const Token tok);
 
 void consume_token(Token *tok, const char c);
 
+bool token_compare(const Token tok, const int type, const char *data);
+
 bool is_keyword(const char *s, const size_t len);
 
 bool is_ident_body(const char c);

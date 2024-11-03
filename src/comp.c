@@ -2,118 +2,51 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "token.h"
+#include "node.h"
 #include "lex.h"
+#include "parse.h"
 #include "error.h"
+#include "out.h"
 #include "comp.h"
-
-void print_token(const Token tok) {
-    printf("%d, %d, ", (tok.line + 1), (tok.col + 1));
-    switch (tok.type) {
-        case UNKNOWN: printf("UNKNOWN"); break;
-        case EQUAL: printf("EQUAL"); break;
-        case PLUS: printf("PLUS"); break;
-        case MINUS: printf("MINUS"); break;
-        case STAR: printf("STAR"); break;
-        case SLASH: printf("SLASH"); break;
-        case GREATER: printf("GREATER"); break;
-        case LESS: printf("LESS"); break;
-        case AMPER: printf("AMPER"); break;
-        case PIPE: printf("PIPE"); break;
-        case EXCLAMATION: printf("EXCLAMATION"); break;
-        case PERCENT: printf("PERCENT"); break;
-        case DOT: printf("DOT"); break;
-        case COMMA: printf("COMMA"); break;
-        case COLON: printf("COLON"); break;
-        case SEMI: printf("SEMI"); break;
-        case UNDERSCORE: printf("UNDERSCORE"); break;
-        case QUEST: printf("QUEST"); break;
-        case LPAR: printf("LPAR"); break;
-        case RPAR: printf("RPAR"); break;
-        case LSQB: printf("LSQB"); break;
-        case RSQB: printf("RSQB"); break;
-        case LBRACE: printf("LBRACE"); break;
-        case RBRACE: printf("RBRACE"); break;
-        case TILDE: printf("TILDE"); break;
-        case CARET: printf("CARET"); break;
-        case AT: printf("AT"); break;
-        case HASH: printf("HASH"); break;
-        case TWO_EQ: printf("TWO_EQ"); break;
-        case TWO_AMPER: printf("TWO_AMPER"); break;
-        case TWO_PIPE: printf("TWO_PIPE"); break;
-        case PLUS_EQ: printf("PLUS_EQ"); break;
-        case MINUS_EQ: printf("MINUS_EQ"); break;
-        case STAR_EQ: printf("STAR_EQ"); break;
-        case SLASH_EQ: printf("SLASH_EQ"); break;
-        case GREATER_EQ: printf("GREATER_EQ"); break;
-        case LESS_EQ: printf("LESS_EQ"); break;
-        case AMPER_EQ: printf("AMPER_EQ"); break;
-        case PIPE_EQ: printf("PIPE_EQ"); break;
-        case EXCLAMATION_EQ: printf("EXCLAMATION_EQ"); break;
-        case PERCENT_EQ: printf("PERCENT_EQ"); break;
-        case CARET_EQ: printf("CARET_EQ"); break;
-        case LSHIFT: printf("LSHIFT"); break;
-        case RSHIFT: printf("RSHIFT"); break;
-        case INCREASE: printf("INCREASE"); break;
-        case DECREASE: printf("DECREASE"); break;
-        case LSHIFT_EQ: printf("LSHIFT_EQ"); break;
-        case RSHIFT_EQ: printf("RSHIFT_EQ"); break;
-        case INTEGER: printf("INTEGER"); break;
-        case FLOAT: printf("FLOAT"); break;
-        case IDENT: printf("IDENT"); break;
-        case KEYWORD: printf("KEYWORD"); break;
-        case COMMENT_LINE: printf("COMMENT_LINE"); break;
-        case COMMENT_BLOCK: printf("COMMENT_BLOCK"); break;
-        case CHAR: printf("CHAR"); break;
-        case STRING: printf("STRING"); break;
-        case FSTRING: printf("FSTRING"); break;
-        case RSTRING: printf("RSTRING"); break;
-        case SPACE: printf("SPACE"); break;
-        case _INDENT: printf("_INDENT"); break;
-        case _DEDENT: printf("_DEDENT"); break;
-        case EOL: printf("EOL"); break;
-        default: printf("%d", tok.type); break;
-    };
-    printf(", %d, `", (int)tok.len);
-    if (tok.data != NULL)
-        printf("%s", tok.data);
-    printf("`\n");
-}
-
-void print_lex(const Token *tokens, const size_t len) {
-    printf("line, col, type, len, data\n");
-    for (int i = 0; i < len; i++)
-        print_token(tokens[i]);
-}
 
 void push_indent(int **indents, int *indentlen, const int indent) {
     *indents = (int *)realloc(*indents, (*indentlen + 1) * sizeof(int));
     if (*indents == NULL)
-        error(ERR_LEX_MSG, "4", NULL);
+        error_lex("4");
     (*indents)[(*indentlen)++] = indent;
+}
+
+void pop_indent(int **indents, int *indentlen) {
+    *indents = (int *)realloc(*indents, (*indentlen - 1) * sizeof(int));
+    if (*indents == NULL)
+        error_lex("5");
+    (*indentlen)--;
 }
 
 void concat_token(Token **tokens, size_t *toklen, const Token *buf, const size_t buflen) {
     *tokens = (Token *)realloc(*tokens, (*toklen + buflen) * sizeof(Token));
     if (*tokens == NULL)
-        error(ERR_LEX_MSG, "5", NULL);
+        error_lex("6");
     for (int i = 0; i < buflen; i++)
         (*tokens)[*toklen + i] = buf[i];
     *toklen += buflen;
 }
 
-void comp(const char *path) {
-    FILE *file = fopen(path, "r");
+Token *lex(const char *src, size_t *len) {
+    FILE *file = fopen(src, "r");
     if (file == NULL)
-        error(ERR_FILE_MSG, path, NULL);
+        error_file(src);
     char *input = NULL;
     size_t inputlen = 0;
     Token *tokens = NULL;
-    size_t toklen = 0;
+    (*len) = 0;
     int *indents = (int *)malloc(sizeof(int));
     indents[0] = 0;
     int indentlen = 1;
+    int total_indent = 0;
     bool start_block = false;
     int line = 0;
     long read;
@@ -124,26 +57,71 @@ void comp(const char *path) {
         if (!start_block) {
             while (input[current] == ' ')
                 current++;
-            if (current > indents[indentlen - 1]) {
+            if (current > total_indent) {
                 Token tok = make_token(_INDENT, line, 0);
-                tok.len = current;
-                push_token(&tokens, &toklen, tok);
-                push_indent(&indents, &indentlen, current);
+                tok.len = current - total_indent;
+                push_token(&tokens, len, tok);
+                push_indent(&indents, &indentlen, current - total_indent);
+                total_indent = current;
             }
-            if (current < indents[indentlen - 1]) {
-                Token tok = make_token(_DEDENT, line, 0);
-                tok.len = current;
-                push_token(&tokens, &toklen, tok);
-                push_indent(&indents, &indentlen, current);
+            if (current < total_indent) {
+                int i = 0;
+                while (true) {
+                    if (indents[indentlen - 1] > total_indent - current)
+                        error_indent(line, current);
+                    Token tok = make_token(_DEDENT, line, 0);
+                    push_token(&tokens, len, tok);
+                    pop_indent(&indents, &indentlen);
+                    total_indent = current;
+                    i++;
+                    if (i >= indentlen)
+                        break;
+                }
             }
         }
         size_t buflen = 0;
         Token *buf = tokenize(input, &buflen, &start_block, line, current);
-        concat_token(&tokens, &toklen, buf, buflen);
+        concat_token(&tokens, len, buf, buflen);
         free(buf);
         line++;
     }
-    free(input);
     fclose(file);
-    print_lex(tokens, toklen);
+    free(input);
+    return tokens;
+}
+
+Node *parse(const char *path, size_t *len) {
+    size_t toklen = 0;
+    Token *tokens = lex(path, &toklen);
+    Node *nodes = parse_expr(tokens, toklen, len);
+    free(tokens);
+    return nodes;
+}
+
+void comp(const char *path) {
+    // size_t len = 0;
+    // Node *nodes = parse(path, &len);
+    printf("this feature is not active yet\n");
+}
+
+void lex_analysis(const char *src, const char *out) {
+    size_t len = 0;
+    Token *tokens = lex(src, &len);
+    FILE *file = fopen(out, "w");
+    if (file == NULL)
+        error_file(out);
+    print_tokens(file, tokens, len);
+    fclose(file);
+    free(tokens);
+}
+
+void parse_analysis(const char *src, const char *out) {
+    size_t len = 0;
+    Node *nodes = parse(src, &len);
+    FILE *file = fopen(out, "w");
+    if (file == NULL)
+        error_file(out);
+    print_nodes(file, nodes, len);
+    fclose(file);
+    free(nodes);
 }

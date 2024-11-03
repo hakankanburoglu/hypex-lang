@@ -12,17 +12,17 @@
 
 const char *KW[KWLEN] = {
     "if",
-    "for","int","let","try","use","var",
-    "base","bool","case","char","elif","else","enum","func","long","null","self","true","uint",
-    "async","await","break","catch","class","const","false","float","short","throw","ulong","while",
-    "double","object","return","string","struct","switch","ushort",
+    "for", "int", "let", "try", "use", "var",
+    "base", "bool", "case", "char", "elif", "else", "enum", "func", "long", "null", "self", "true", "uint",
+    "async", "await", "break", "catch", "class", "const", "false", "float", "short", "throw", "ulong", "while",
+    "double", "object", "return", "string", "struct", "switch", "ushort",
     "continue"
 };
 
 void push_token(Token **tokens, size_t *len, const Token tok) {
     *tokens = (Token *)realloc(*tokens, (*len + 1) * sizeof(Token));
     if (*tokens == NULL) {
-        error(ERR_LEX_MSG, "1", NULL);
+        error_lex("1");
         return;
     }
     (*tokens)[(*len)++] = tok;
@@ -32,7 +32,7 @@ void consume_token(Token *tok, const char c) {
     if (tok->data == NULL) {
         tok->data = (char *)realloc(tok->data, 2 * sizeof(char));
         if (tok->data == NULL) {
-            error(ERR_LEX_MSG, "2", NULL);
+            error_lex("2");
             return;
         }
         tok->len = 1;
@@ -42,11 +42,15 @@ void consume_token(Token *tok, const char c) {
         tok->data[tok->len++] = c;
         tok->data = (char *)realloc(tok->data, (tok->len + 1) * sizeof(char));
         if (tok->data == NULL) {
-            error(ERR_LEX_MSG, "3", NULL);
+            error_lex("3");
             return;
         }
         tok->data[tok->len] = '\0';
     }
+}
+
+bool token_compare(const Token tok, const int type, const char *data) {
+    return tok.type == type && strcmp(tok.data, data) == 0;
 }
 
 bool is_keyword(const char *s, const size_t len) {
@@ -511,7 +515,7 @@ Token *tokenize(const char *input, size_t *len, bool *start_block, const int lin
                         current++;
                     }
                 } else {
-                    errorp(line, current, input[current], ERR_CHR_MSG, NULL);
+                    error_char(line, current, input[current]);
                 }
                 break;
         }

@@ -1,0 +1,11 @@
+root_node:
+    expr_node: a
+    paren_expr:
+        expr_node: bc
+        paren_expr:
+            expr_node: d
+            paren_expr:
+                expr_node: e
+            expr_node: f
+        expr_node: g
+    expr_node: h

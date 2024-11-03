@@ -1,0 +1,3 @@
+ast_root_node:
+    func_def: `main`
+        var_init: `a`, `2`
