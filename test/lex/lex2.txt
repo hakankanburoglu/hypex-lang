@@ -1,7 +1,0 @@
-var s = "hello"
-var r = r"folder1\folder2\text.txt"
-var f = f"s: {s}"
-var q = "this is \"quotation\""
-
-var c1 = '"'
-var c2 = '\''
