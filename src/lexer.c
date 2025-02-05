@@ -8,7 +8,9 @@
 #include "lexer.h"
 #include "error.h"
 
-const char *KWLIST[] = {
+#define KWLEN 41
+
+const char *KWLIST[KWLEN] = {
     "if", 
     "for", "int", "try", "use", "var",
     "base", "bool", "case", "char", "elif", "else", "enum", "func", "long", "null", "self", "true", "uint",
@@ -115,7 +117,7 @@ static inline bool is_ident_body(const Lexer *lex) {
 }
 
 static inline int match_keyword(const char *s) {
-    const char **res = (const char **)bsearch(s, KWLIST, 41, sizeof(KWLIST[0]), (int (*)(const void *, const void *))strcmp);
+    const char **res = (const char **)bsearch(s, KWLIST, KWLEN, sizeof(KWLIST[0]), (int (*)(const void *, const void *))strcmp);
     return res ? (int)(res - KWLIST) : -1;
 }
 
