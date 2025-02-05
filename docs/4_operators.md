@@ -22,10 +22,12 @@
   <tr> <th colspan="4">Logical Operators</th> </tr>
   <tr> <th>Operator</th><th>Description</th> <th>Operator</th><th>Description</th> </tr>
   <tr> <td>&&</td><td>Logical And</td> <td>!</td><td>Logical Not</td> </tr>
-  <tr> <td>||</td><td>Logical Or</td> <td>^</td><td>Logical Xor</td> </tr>
+  <tr> <td>||</td><td>Logical Or</td> </tr>
   <tr> <th colspan="4">Bitwise Operators</th> </tr>
   <tr> <th>Operator</th><th>Description</th> <th>Operator</th><th>Description</th> </tr>
-  <tr> <td><<</td><td>Left Shift</td> <td>>></td><td>Right Shift</td> </tr>
+  <tr> <td>&</td><td>Bitwise And</td> <td><<</td><td>Left Shift</td> </tr>
+  <tr> <td>|</td><td>Bitwise Or</td> <td>>></td><td>Right Shift</td> </tr>
+  <tr> <td>^</td><td>Bitwise Xor</td> </tr>
   <tr> <th colspan="4">Unary Operators</th> </tr>
   <tr> <th>Operator</th><th>Description</th> <th>Operator</th><th>Description</th> </tr>
   <tr> <td>x++</td><td>Post-Increment</td> <td>++x</td><td>Pre-Increment</td> </tr>

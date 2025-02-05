@@ -1,0 +1,37 @@
+/*
+ * this is multiline comment block
+ */
+
+func main():
+    var:int a = 1 //this is a comment line
+    var:int b /*this is a comment block*/ = 2
+    var:int c = 3 /*another multi-line 
+    comment block*/ var:int d = 4
+
+    //numbers
+    const pi = 3.14
+    var dec = 10
+    var hex = 0xa
+    var oct = 0o12
+    var bin = 0b1010
+    var e = 1.2e3
+    var p = 0x1fp2
+    var e2 = 1.2e-3
+    var p2 = 0x1fp-2
+    var sep = 1_000_000
+
+    var s = "hello world" //string variable
+    var q = "strings are started and closed with '\"' operator" //string escape
+    var f = f"1 + 2 = {1 + 2}\n3 + 4 = {3 + 4}" //format string
+    var r = r"root\folder\folder2\folder3" //raw string
+
+    var c1 = '"' //char variable
+    var c2 = '\'' //char escape
+
+    //indentation test
+    for i : range(0, 10):
+        for j : range(0, 10):
+            >> f"j={j}\n"
+        >> f"i={i}\n"
+    for k : range(0, 10):
+        >> f"k={k}\n"

@@ -15,11 +15,11 @@ enum Number:
 
 func main():
     var:Number num = Number.ONE
-    >> num.value
-    num = Number[2]
-    >> num.value
+    >> num.value // 1
+    num = Number[1]
+    >> num.value // 2
     num++
-    >> num.value
+    >> num.value // 3
 
 ```
 

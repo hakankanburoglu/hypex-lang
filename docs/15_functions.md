@@ -3,11 +3,6 @@
 ```
 func square(int n):
     return n * n
-```
-
-```
-func square(int n):
-    return n * n
 
 func main():
     var:int n

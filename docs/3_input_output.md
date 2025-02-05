@@ -5,7 +5,7 @@ The input function is defined with the `<<` operator and the output function wit
 ```
 func main():
     var:string name
-    >> "Enter your name : "
+    >> "Enter your name: "
     << name
     >> "Hello, " + name + "!"
 ```

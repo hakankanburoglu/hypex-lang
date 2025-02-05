@@ -14,7 +14,7 @@ func main():
         >> n + "\n"
 ```
 
-But it also optionally supports the classic brace-blocking style. In fact, optionally, semi-colon can be placed at the end of the lines.
+But it also optionally supports the classic brace-blocking style.
 
 ```
 func main() {
@@ -22,18 +22,6 @@ func main() {
     << n
     for i : range(0, n)
         >> n + "\n"
-}
-```
-
-```
-func main() {
-    for (int i = 0; i < 10; i++) {
-        if (i % 2 == 0) {
-            >> i + " is even number";
-        } else {
-            >> i + " is not even number";
-        }
-    }
 }
 ```
 

@@ -1,45 +1,37 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <string.h>
-#include <ctype.h>
 
 #include "error.h"
 
-void error_undef_arg(const char *arg) {
-    fprintf(stderr, "%s: %s\n", ERR_UNDEF_ARG_MSG, arg);
+void error_hypex() {
+    fprintf(stderr, "hypex error\n");
+}
+
+void error_file(const char *file) {
+    fprintf(stderr, "no such file or directory: %s\n", file);
     exit(EXIT_FAILURE);
 }
 
-void error_file(const char *path) {
-    fprintf(stderr, "%s: %s\n", ERR_FILE_MSG, path);
+void error_file_proc(const char *file) {
+    fprintf(stderr, "file processing error: %s\n", file);
     exit(EXIT_FAILURE);
 }
 
-void error_indent(const int line, const int pos) {
-    fprintf(stderr, "[%d:%d] %s\n", line, pos, ERR_INDENT_MSG);
+void error_file_read(const char *file) {
+    fprintf(stderr, "file could not be read completely: %s\n", file);
     exit(EXIT_FAILURE);
 }
 
-void error_char(const int line, const int col, const char c) {
-    fprintf(stderr, "[%d:%d] %s: ", (line + 1), (col + 1), ERR_CHR_MSG);
-    if (isprint(c))
-        fprintf(stderr, "'%c'\n", c);
-    else
-        fprintf(stderr, "0x%x\n", (unsigned char)c);
+void error_char(const char *file, int line, int col, char c) {
+    if (file != NULL) fprintf(stderr, "%s:", file);
+    fprintf(stderr, "%d:%d invalid character: '%c' (0x%x)\n", line + 1, col + 1, c, c);
     exit(EXIT_FAILURE);
 }
 
-void error_lex(const char *code) {
-    fprintf(stderr, "%s: %s\n", ERR_LEX_MSG, code);
-    exit(EXIT_FAILURE);
-}
-
-void error_parse(const char *code) {
-    fprintf(stderr, "%s: %s\n", ERR_PARSE_MSG, code);
-    exit(EXIT_FAILURE);
-}
-
-void error_ast_parse(const char *code) {
-    fprintf(stderr, "%s: %s\n", ERR_AST_PARSE_MSG, code);
+void error_number(const char *file, int line, int col, const char *value) {
+    if (file != NULL) fprintf(stderr, "%s:", file);
+    fprintf(stderr, "%d:%d invalid number literal: %s\n", line + 1, col + 1, value);
     exit(EXIT_FAILURE);
 }

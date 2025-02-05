@@ -1,21 +1,33 @@
-#ifndef LEX_H
-#define LEX_H
+#ifndef LEXER_H
+#define LEXER_H
 
 #include <stddef.h>
 #include <stdbool.h>
 
 #include "token.h"
 
-void push_token(Token **tokens, size_t *len, const Token tok);
+typedef struct {
+    char *input;
+    size_t inputlen;
+    char *file;
+    Token **tok_list;
+    size_t len;
+    int offset;
+    Pos pos;
+    bool newline;
+    bool comment_eol;
+    bool potential_fstring;
+    bool potential_rstring;
+    bool fstring_body;
+    bool fstring_expr;
+} Lexer;
 
-void consume_token(Token *tok, const char c);
+Lexer *init_lexer(const char *input, const char *file);
 
-bool token_compare(const Token tok, const int type, const char *data);
+void consume_lex(Lexer *lex, Token *tok);
 
-bool is_keyword(const char *s, const size_t len);
+void tokenize(Lexer *lex);
 
-bool is_ident_body(const char c);
+void free_lex(Lexer *lex);
 
-Token *tokenize(const char *input, size_t *len, bool *start_block, const int line, int current);
-
-#endif //LEX_H
+#endif //LEXER_H

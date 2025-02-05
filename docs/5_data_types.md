@@ -15,4 +15,6 @@
   <tr><td>string</td><td>16<br>(per character)</td><td><code>char</code> range per character</td></tr>
 </table>
 
+> **Note:** The sizes and ranges of variables may vary across different platforms, architectures, and compilers. Actual size and range are determined by the compiler and target system, so may vary depending on the specific environment.
+
 [Index](index.md) | [<< Back](4_operators.md) | [Next >>](6_keywords.md)

@@ -15,7 +15,7 @@ switch expression:
 ```
 func main():
     var:char digit
-    >> "Enter a digit : "
+    >> "Enter a digit: "
     << digit
     switch digit:
         case '0': >> "Zero"

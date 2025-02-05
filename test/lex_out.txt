@@ -1,0 +1,325 @@
+lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr:0
+
+1:1 COMMENT_BLOCK len:1
+1:3 COMMENT_EOL len:0
+1:1 COMMENT_BLOCK value:` * this is multiline comment block` len:34
+2:35 COMMENT_EOL len:0
+1:1 COMMENT_BLOCK value:` ` len:1
+3:4 EOL len:0
+4:1 EOL len:0
+5:1 IDENT value:`func` len:4
+5:5 SPACE len:1
+5:6 IDENT value:`main` len:4
+5:10 LPAR len:1
+5:11 RPAR len:1
+5:12 COLON len:1
+5:13 EOL len:0
+6:1 SPACE len:4
+6:5 IDENT value:`var` len:3
+6:8 COLON len:1
+6:9 IDENT value:`int` len:3
+6:12 SPACE len:1
+6:13 IDENT value:`a` len:1
+6:14 SPACE len:1
+6:15 EQUAL len:1
+6:16 SPACE len:1
+6:17 INTEGER value:`1` num_value=`1` num_len:1 len:1
+6:18 SPACE len:1
+6:19 COMMENT_LINE value:`this is a comment line` len:22
+6:43 EOL len:0
+7:1 SPACE len:4
+7:5 IDENT value:`var` len:3
+7:8 COLON len:1
+7:9 IDENT value:`int` len:3
+7:12 SPACE len:1
+7:13 IDENT value:`b` len:1
+7:14 SPACE len:1
+7:15 COMMENT_BLOCK value:`this is a comment block` len:23
+7:42 SPACE len:1
+7:43 EQUAL len:1
+7:44 SPACE len:1
+7:45 INTEGER value:`2` num_value=`2` num_len:1 len:1
+7:46 EOL len:0
+8:1 SPACE len:4
+8:5 IDENT value:`var` len:3
+8:8 COLON len:1
+8:9 IDENT value:`int` len:3
+8:12 SPACE len:1
+8:13 IDENT value:`c` len:1
+8:14 SPACE len:1
+8:15 EQUAL len:1
+8:16 SPACE len:1
+8:17 INTEGER value:`3` num_value=`3` num_len:1 len:1
+8:18 SPACE len:1
+8:19 COMMENT_BLOCK value:`another multi-line ` len:19
+8:40 COMMENT_EOL len:0
+8:19 COMMENT_BLOCK value:`    comment block` len:17
+9:20 SPACE len:1
+9:21 IDENT value:`var` len:3
+9:24 COLON len:1
+9:25 IDENT value:`int` len:3
+9:28 SPACE len:1
+9:29 IDENT value:`d` len:1
+9:30 SPACE len:1
+9:31 EQUAL len:1
+9:32 SPACE len:1
+9:33 INTEGER value:`4` num_value=`4` num_len:1 len:1
+9:34 EOL len:0
+10:1 EOL len:0
+11:1 SPACE len:4
+11:5 COMMENT_LINE value:`numbers` len:7
+11:14 EOL len:0
+12:1 SPACE len:4
+12:5 IDENT value:`const` len:5
+12:10 SPACE len:1
+12:11 IDENT value:`pi` len:2
+12:13 SPACE len:1
+12:14 EQUAL len:1
+12:15 SPACE len:1
+12:16 FLOAT value:`3.14` num_value=`3.14` num_len:4 len:4
+12:20 EOL len:0
+13:1 SPACE len:4
+13:5 IDENT value:`var` len:3
+13:8 SPACE len:1
+13:9 IDENT value:`dec` len:3
+13:12 SPACE len:1
+13:13 EQUAL len:1
+13:14 SPACE len:1
+13:15 INTEGER value:`10` num_value=`10` num_len:2 len:2
+13:17 EOL len:0
+14:1 SPACE len:4
+14:5 IDENT value:`var` len:3
+14:8 SPACE len:1
+14:9 IDENT value:`hex` len:3
+14:12 SPACE len:1
+14:13 EQUAL len:1
+14:14 SPACE len:1
+14:15 INTEGER value:`0xa` base_hex num_value=`0xa` num_len:3 len:3
+14:18 EOL len:0
+15:1 SPACE len:4
+15:5 IDENT value:`var` len:3
+15:8 SPACE len:1
+15:9 IDENT value:`oct` len:3
+15:12 SPACE len:1
+15:13 EQUAL len:1
+15:14 SPACE len:1
+15:15 INTEGER value:`0o12` base_oct num_value=`0o12` num_len:4 len:4
+15:19 EOL len:0
+16:1 SPACE len:4
+16:5 IDENT value:`var` len:3
+16:8 SPACE len:1
+16:9 IDENT value:`bin` len:3
+16:12 SPACE len:1
+16:13 EQUAL len:1
+16:14 SPACE len:1
+16:15 INTEGER value:`0b1010` base_bin num_value=`0b1010` num_len:6 len:6
+16:21 EOL len:0
+17:1 SPACE len:4
+17:5 IDENT value:`var` len:3
+17:8 SPACE len:1
+17:9 IDENT value:`e` len:1
+17:10 SPACE len:1
+17:11 EQUAL len:1
+17:12 SPACE len:1
+17:13 FLOAT value:`1.2e3` exponent num_value=`1.2e3` num_len:5 len:5
+17:18 EOL len:0
+18:1 SPACE len:4
+18:5 IDENT value:`var` len:3
+18:8 SPACE len:1
+18:9 IDENT value:`p` len:1
+18:10 SPACE len:1
+18:11 EQUAL len:1
+18:12 SPACE len:1
+18:13 INTEGER value:`0x1fp2` base_hex exponent num_value=`0x1fp2` num_len:6 len:6
+18:19 EOL len:0
+19:1 SPACE len:4
+19:5 IDENT value:`var` len:3
+19:8 SPACE len:1
+19:9 IDENT value:`e2` len:2
+19:11 SPACE len:1
+19:12 EQUAL len:1
+19:13 SPACE len:1
+19:14 FLOAT value:`1.2e-3` negative_exponent num_value=`1.2e-3` num_len:6 len:6
+19:20 EOL len:0
+20:1 SPACE len:4
+20:5 IDENT value:`var` len:3
+20:8 SPACE len:1
+20:9 IDENT value:`p2` len:2
+20:11 SPACE len:1
+20:12 EQUAL len:1
+20:13 SPACE len:1
+20:14 INTEGER value:`0x1fp-2` base_hex negative_exponent num_value=`0x1fp-2` num_len:7 len:7
+20:21 EOL len:0
+21:1 SPACE len:4
+21:5 IDENT value:`var` len:3
+21:8 SPACE len:1
+21:9 IDENT value:`sep` len:3
+21:12 SPACE len:1
+21:13 EQUAL len:1
+21:14 SPACE len:1
+21:15 INTEGER value:`1_000_000` num_value=`1000000` num_len:7 len:9
+21:24 EOL len:0
+22:1 EOL len:0
+23:1 SPACE len:4
+23:5 IDENT value:`var` len:3
+23:8 SPACE len:1
+23:9 IDENT value:`s` len:1
+23:10 SPACE len:1
+23:11 EQUAL len:1
+23:12 SPACE len:1
+23:13 STRING value:`hello world` len:11
+23:26 SPACE len:1
+23:27 COMMENT_LINE value:`string variable` len:15
+23:44 EOL len:0
+24:1 SPACE len:4
+24:5 IDENT value:`var` len:3
+24:8 SPACE len:1
+24:9 IDENT value:`q` len:1
+24:10 SPACE len:1
+24:11 EQUAL len:1
+24:12 SPACE len:1
+24:13 STRING value:`strings are started and closed with '\"' operator` len:49
+24:64 SPACE len:1
+24:65 COMMENT_LINE value:`string escape` len:13
+24:80 EOL len:0
+25:1 SPACE len:4
+25:5 IDENT value:`var` len:3
+25:8 SPACE len:1
+25:9 IDENT value:`f` len:1
+25:10 SPACE len:1
+25:11 EQUAL len:1
+25:12 SPACE len:1
+25:13 IDENT value:`f` len:1
+25:14 FSTRING_START len:0
+25:15 FSTRING_BODY value:`1 + 2 = ` len:8
+25:24 INTEGER value:`1` num_value=`1` num_len:1 len:1
+25:25 SPACE len:1
+25:26 PLUS len:1
+25:27 SPACE len:1
+25:28 INTEGER value:`2` num_value=`2` num_len:1 len:1
+25:30 FSTRING_BODY value:`\n3 + 4 = ` len:10
+25:41 INTEGER value:`3` num_value=`3` num_len:1 len:1
+25:42 SPACE len:1
+25:43 PLUS len:1
+25:44 SPACE len:1
+25:45 INTEGER value:`4` num_value=`4` num_len:1 len:1
+25:47 FSTRING_BODY len:0
+25:47 FSTRING_END len:0
+25:48 SPACE len:1
+25:49 COMMENT_LINE value:`format string` len:13
+25:64 EOL len:0
+26:1 SPACE len:4
+26:5 IDENT value:`var` len:3
+26:8 SPACE len:1
+26:9 IDENT value:`r` len:1
+26:10 SPACE len:1
+26:11 EQUAL len:1
+26:12 SPACE len:1
+26:13 RSTRING value:`root\folder\folder2\folder3` len:27
+26:43 SPACE len:1
+26:44 COMMENT_LINE value:`raw string` len:10
+26:56 EOL len:0
+27:1 EOL len:0
+28:1 SPACE len:4
+28:5 IDENT value:`var` len:3
+28:8 SPACE len:1
+28:9 IDENT value:`c1` len:2
+28:11 SPACE len:1
+28:12 EQUAL len:1
+28:13 SPACE len:1
+28:14 CHAR value:`"` len:1
+28:17 SPACE len:1
+28:18 COMMENT_LINE value:`char variable` len:13
+28:33 EOL len:0
+29:1 SPACE len:4
+29:5 IDENT value:`var` len:3
+29:8 SPACE len:1
+29:9 IDENT value:`c2` len:2
+29:11 SPACE len:1
+29:12 EQUAL len:1
+29:13 SPACE len:1
+29:14 CHAR value:`\'` len:2
+29:18 SPACE len:1
+29:19 COMMENT_LINE value:`char escape` len:11
+29:32 EOL len:0
+30:1 EOL len:0
+31:1 SPACE len:4
+31:5 COMMENT_LINE value:`indentation test` len:16
+31:23 EOL len:0
+32:1 SPACE len:4
+32:5 IDENT value:`for` len:3
+32:8 SPACE len:1
+32:9 IDENT value:`i` len:1
+32:10 SPACE len:1
+32:11 COLON len:1
+32:12 SPACE len:1
+32:13 IDENT value:`range` len:5
+32:18 LPAR len:1
+32:19 INTEGER value:`0` num_value=`0` num_len:1 len:1
+32:20 COMMA len:1
+32:21 SPACE len:1
+32:22 INTEGER value:`10` num_value=`10` num_len:2 len:2
+32:24 RPAR len:1
+32:25 COLON len:1
+32:26 EOL len:0
+33:1 SPACE len:8
+33:9 IDENT value:`for` len:3
+33:12 SPACE len:1
+33:13 IDENT value:`j` len:1
+33:14 SPACE len:1
+33:15 COLON len:1
+33:16 SPACE len:1
+33:17 IDENT value:`range` len:5
+33:22 LPAR len:1
+33:23 INTEGER value:`0` num_value=`0` num_len:1 len:1
+33:24 COMMA len:1
+33:25 SPACE len:1
+33:26 INTEGER value:`10` num_value=`10` num_len:2 len:2
+33:28 RPAR len:1
+33:29 COLON len:1
+33:30 EOL len:0
+34:1 SPACE len:12
+34:13 RSHIFT len:2
+34:15 SPACE len:1
+34:16 IDENT value:`f` len:1
+34:17 FSTRING_START len:0
+34:18 FSTRING_BODY value:`j=` len:2
+34:21 IDENT value:`j` len:1
+34:23 FSTRING_BODY value:`\n` len:2
+34:25 FSTRING_END len:0
+34:26 EOL len:0
+35:1 SPACE len:8
+35:9 RSHIFT len:2
+35:11 SPACE len:1
+35:12 IDENT value:`f` len:1
+35:13 FSTRING_START len:0
+35:14 FSTRING_BODY value:`i=` len:2
+35:17 IDENT value:`i` len:1
+35:19 FSTRING_BODY value:`\n` len:2
+35:21 FSTRING_END len:0
+35:22 EOL len:0
+36:1 SPACE len:4
+36:5 IDENT value:`for` len:3
+36:8 SPACE len:1
+36:9 IDENT value:`k` len:1
+36:10 SPACE len:1
+36:11 COLON len:1
+36:12 SPACE len:1
+36:13 IDENT value:`range` len:5
+36:18 LPAR len:1
+36:19 INTEGER value:`0` num_value=`0` num_len:1 len:1
+36:20 COMMA len:1
+36:21 SPACE len:1
+36:22 INTEGER value:`10` num_value=`10` num_len:2 len:2
+36:24 RPAR len:1
+36:25 COLON len:1
+36:26 EOL len:0
+37:1 SPACE len:8
+37:9 RSHIFT len:2
+37:11 SPACE len:1
+37:12 IDENT value:`f` len:1
+37:13 FSTRING_START len:0
+37:14 FSTRING_BODY value:`k=` len:2
+37:17 IDENT value:`k` len:1
+37:19 FSTRING_BODY value:`\n` len:2
+37:21 FSTRING_END len:0

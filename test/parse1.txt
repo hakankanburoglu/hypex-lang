@@ -1,0 +1,11 @@
+func test(int x, int y, int z):
+    if (x == 0 && y == 0 && z == 0):
+        return 0
+    var:int n = x + y + z
+    x++
+    ++x
+    var a = x + y * z
+    var b = (x + y) * z
+    var c = x * y + z - x
+    a += b
+    a -= c

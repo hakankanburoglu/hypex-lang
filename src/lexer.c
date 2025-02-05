@@ -1,284 +1,487 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <stdbool.h>
-#include <string.h>
 #include <ctype.h>
+#include <string.h>
 
 #include "token.h"
-#include "lex.h"
+#include "lexer.h"
 #include "error.h"
 
-#define KWLEN 40
-
-const char *KW[KWLEN] = {
-    "if",
-    "for", "int", "let", "try", "use", "var",
+const char *KWLIST[] = {
+    "if", 
+    "for", "int", "try", "use", "var",
     "base", "bool", "case", "char", "elif", "else", "enum", "func", "long", "null", "self", "true", "uint",
-    "async", "await", "break", "catch", "class", "const", "false", "float", "short", "throw", "ulong", "while",
+    "async", "await", "break", "catch", "class", "const", "false", "float", "short", "throw", "ulong", "while", "yield",
     "double", "object", "return", "string", "struct", "switch", "ushort",
-    "continue"
+    "continue", 
+    "interface"
 };
 
-void push_token(Token **tokens, size_t *len, const Token tok) {
-    *tokens = (Token *)realloc(*tokens, (*len + 1) * sizeof(Token));
-    if (*tokens == NULL) {
-        error_lex("1");
-        return;
-    }
-    (*tokens)[(*len)++] = tok;
-}
-
-void consume_token(Token *tok, const char c) {
-    if (tok->data == NULL) {
-        tok->data = (char *)realloc(tok->data, 2 * sizeof(char));
-        if (tok->data == NULL) {
-            error_lex("2");
-            return;
-        }
-        tok->len = 1;
-        tok->data[0] = c;
-        tok->data[1] = '\0';
+Lexer *init_lexer(const char *input, const char *file) {
+    Lexer *lex = (Lexer *)malloc(sizeof(Lexer));
+    if (lex == NULL) error_hypex();
+    if (input != NULL) {
+        const size_t inputlen = strlen(input);
+        lex->input = (char *)malloc(sizeof(char) * inputlen);
+        if (lex->input == NULL) error_hypex();
+        strcpy(lex->input, input);
+        lex->inputlen = inputlen;
     } else {
-        tok->data[tok->len++] = c;
-        tok->data = (char *)realloc(tok->data, (tok->len + 1) * sizeof(char));
-        if (tok->data == NULL) {
-            error_lex("3");
-            return;
-        }
-        tok->data[tok->len] = '\0';
+        lex->input = NULL;
+        lex->inputlen = 0;
+    }
+    if (file != NULL) {
+        lex->file = (char *)malloc(sizeof(char) * (strlen(file) + 1));
+        if (lex->file == NULL) error_hypex();
+        strcpy(lex->file, file);
+    } else {
+        lex->file = NULL;
+    }
+    lex->tok_list = NULL;
+    lex->len = 0;
+    lex->offset = 0;
+    lex->pos = (Pos){1, 1};
+    lex->newline = false;
+    lex->comment_eol = false;
+    lex->potential_fstring = false;
+    lex->potential_rstring = false;
+    lex->fstring_body = false;
+    lex->fstring_expr = false;
+    return lex;
+}
+
+void consume_lex(Lexer *lex, Token *tok) {
+    if (lex->tok_list == NULL) {
+        lex->tok_list = (Token **)realloc(lex->tok_list, sizeof(Token));
+        if (lex->tok_list == NULL) error_hypex();
+        lex->len = 1;
+        lex->tok_list[0] = tok;
+    } else {
+        lex->tok_list = (Token **)realloc(lex->tok_list, sizeof(Token) * (lex->len + 1));
+        if (lex->tok_list == NULL) error_hypex();
+        lex->len++;
+        lex->tok_list[lex->len - 1] = tok;   
     }
 }
 
-bool token_compare(const Token tok, const int type, const char *data) {
-    return tok.type == type && strcmp(tok.data, data) == 0;
+static inline bool match_lex(const Lexer *lex) {
+    return lex->offset < lex->inputlen;
 }
 
-bool is_keyword(const char *s, const size_t len) {
-    switch (len) {
-        case 2:
-            return strcmp(KW[0], s) == 0;
-        case 3:
-            for (int i = 1; i <= 6; i++)
-                if (strcmp(KW[i], s) == 0)
-                    return true;
-            return false;
-        case 4:
-            for (int i = 7; i <= 19; i++)
-                if (strcmp(KW[i], s) == 0)
-                    return true;
-            return false;
-        case 5:
-            for (int i = 20; i <= 31; i++)
-                if (strcmp(KW[i], s) == 0)
-                    return true;
-            return false;
-        case 6:
-            for (int i = 32; i <= 38; i++)
-                if (strcmp(KW[i], s) == 0)
-                    return true;
-            return false;
-        case 8:
-            return strcmp(KW[39], s) == 0;
-        default:
-            return false;
+// Overflow warning: Input length is not checked in this function.
+static inline char current_lex(const Lexer *lex) {
+    return lex->input[lex->offset];
+}
+
+// Overflow warning: Input length is not checked in this function.
+static inline void advance_lex(Lexer *lex) {
+    lex->offset++;
+    lex->pos.column++;
+}
+
+// for platform-dependent line feeds
+static inline bool is_eol(Lexer *lex) {
+    if (current_lex(lex) == '\r') {
+        advance_lex(lex);
+        if (!match_lex(lex))
+            return true;
+        if (current_lex(lex) == '\n') //CRLF
+            return true;
+        return true; //CR
     }
+    return current_lex(lex) == '\n'; //LF
 }
 
-bool is_ident_body(const char c) {
+static inline bool is_letter(const Lexer *lex) {
+    return isalpha(current_lex(lex));
+}
+
+static inline bool is_number(const Lexer *lex) {
+    return isdigit(current_lex(lex));
+}
+
+static inline bool is_exponent(const Token *buf, char c) {
+    if (!buf->is_exponent) {
+        if (buf->base == BASE_DEC && (c == 'e' || c == 'E')) return true;
+        if (buf->base == BASE_HEX && (c == 'p' || c == 'P')) return true;
+    }
+    return false;
+}
+
+static inline bool is_ident_body(const Lexer *lex) {
+    const char c = current_lex(lex);
     return isalnum(c) || c == '_';
 }
 
-Token *tokenize(const char *input, size_t *len, bool *start_block, const int line, int current) {
-    Token *tokens = NULL;
-    *len = 0;
-    const size_t inputlen = strlen(input);
-    bool potential_fstring = false;
-    bool potential_rstring = false;
-    while (current < inputlen) {
-        Token buf = make_token(UNKNOWN, line, current);
-        if (current == 0 && *start_block) {
-            buf.type = COMMENT_BLOCK;
-            while (current < inputlen) {
-                if (input[current] == '*') {
-                    current++;
-                    if (current < inputlen) {
-                        if (input[current] == '/') {
-                            current++;
-                            *start_block = false;
-                            break;
-                        } else {
-                            consume_token(&buf, input[current]);
-                        }
-                    }
-                } else {
-                    consume_token(&buf, input[current]);
-                }
-                current++;
+static inline int match_keyword(const char *s) {
+    const char **res = (const char **)bsearch(s, KWLIST, 41, sizeof(KWLIST[0]), (int (*)(const void *, const void *))strcmp);
+    return res ? (int)(res - KWLIST) : -1;
+}
+
+static int match_base(char c) {
+    switch (c) {
+        case 'x': return BASE_HEX;
+        case 'o': return BASE_OCT;
+        case 'b': return BASE_BIN;
+        default: return BASE_DEC;
+    }
+}
+
+static void lex_eol(Lexer *lex, Token *buf) {
+    buf->type = EOL;
+    lex->newline = true;
+    advance_lex(lex);
+}
+
+static void lex_comment_line(Lexer *lex, Token *buf) {
+    buf->type = COMMENT_LINE;
+    advance_lex(lex);
+    while (match_lex(lex) && !is_eol(lex)) {
+        consume_token(buf, current_lex(lex));
+        advance_lex(lex);
+    }
+}
+
+static void lex_comment_block(Lexer *lex, Token *buf) {
+    buf->type = COMMENT_BLOCK;
+    advance_lex(lex);
+    while (match_lex(lex)) {
+        if (is_eol(lex)) {
+            consume_lex(lex, copy_token(buf));
+            buf->value = NULL;
+            buf->len = 0;
+            consume_lex(lex, make_token(COMMENT_EOL, lex->pos));
+            lex->pos.line++;
+            lex->pos.column = 0;
+            advance_lex(lex);
+            if (!match_lex(lex)) return;
+        }
+        if (current_lex(lex) == '*') {
+            advance_lex(lex);
+            if (!match_lex(lex)) return;
+            if (current_lex(lex) == '/') {
+                advance_lex(lex);
+                return;
             }
-            push_token(&tokens, len, buf);
-            buf = make_token(UNKNOWN, line, current);
-            if (current >= inputlen)
+            consume_token(buf, '*');
+        }
+        consume_token(buf, current_lex(lex));
+        advance_lex(lex);
+    }
+}
+
+static void lex_literal(Lexer *lex, Token *buf, char sepr) {
+    bool escape = false;
+    advance_lex(lex);
+    while (match_lex(lex) && (current_lex(lex) != sepr || escape)) {
+        if (escape)
+            escape = false;
+        if (current_lex(lex) == '\\')
+            escape = true;
+        consume_token(buf, current_lex(lex));
+        advance_lex(lex);
+    }
+    advance_lex(lex);
+}
+
+static void lex_fstring_body(Lexer *lex, Token *buf) {
+    buf->type = FSTRING_BODY;
+    bool escape_fstring = false;
+    bool fstring_end = false;
+    while (match_lex(lex)) {
+        if  (current_lex(lex) == '"' && !escape_fstring) {
+            lex->fstring_body = false;
+            fstring_end = true;
+            break;
+        }
+        if (current_lex(lex) == '{') {
+            lex->fstring_body = false;
+            lex->fstring_expr = true;
+            advance_lex(lex);
+            break;
+        }
+        if (escape_fstring)
+            escape_fstring = false;
+        if (current_lex(lex) == '\\')
+            escape_fstring = true;
+        consume_token(buf, current_lex(lex));
+        advance_lex(lex);
+    }
+    consume_lex(lex, buf);
+    if (fstring_end) {
+        fstring_end = false;
+        consume_lex(lex, make_token(FSTRING_END, lex->pos));
+        advance_lex(lex);
+    }
+}
+
+static void lex_rstring(Lexer *lex) {
+    Token *last = lex->tok_list[lex->len - 1];
+    last->type = RSTRING;
+    last->value = NULL;
+    last->len = 0;
+    advance_lex(lex);
+    while (match_lex(lex) && current_lex(lex) != '"') {
+        consume_token(last, current_lex(lex));
+        advance_lex(lex);
+    }
+    advance_lex(lex);
+}
+
+static void lex_number(Lexer *lex, Token *buf) {
+    buf->type = INTEGER;
+    init_number(buf);
+    consume_number(buf, current_lex(lex));
+    advance_lex(lex);
+    if (buf->value[0] == '0') {
+        const int base = match_base(current_lex(lex));
+        if (base != 0) {
+            buf->base = base;
+            consume_number(buf, current_lex(lex));
+            advance_lex(lex);
+        }
+    }
+    while (match_lex(lex)) {
+        const char c = current_lex(lex);
+        if (c == '_') {
+            consume_token(buf, c);
+            advance_lex(lex);
+            continue;
+        }
+        if (buf->is_exponent) {
+            if (isdigit(c)) {
+                consume_number(buf, c);
+                advance_lex(lex);
+                continue;
+            }
+            if (!buf->is_negative && c == '-') {
+                buf->is_negative = true;
+                consume_number(buf, c);
+                advance_lex(lex);
+                continue;
+            }
+        }
+        if (buf->type != FLOAT && c == '.') {
+            buf->type = FLOAT;
+            consume_number(buf, c);
+            advance_lex(lex);
+            continue;
+        }
+        if (is_exponent(buf, c)) {
+            buf->is_exponent = true;
+            consume_number(buf, c);
+            advance_lex(lex);
+            continue;
+        }
+        switch (buf->base) {
+            case BASE_DEC:
+                if (isdigit(c)) {
+                    consume_number(buf, c);
+                    advance_lex(lex);
+                    continue;
+                }
+                break;
+            case BASE_HEX:
+                if (isxdigit(c)) {
+                    consume_number(buf, c);
+                    advance_lex(lex);
+                    continue;
+                }
+                break;
+            case BASE_OCT:
+                if (c >= '0' && c <= '7') {
+                    consume_number(buf, c);
+                    advance_lex(lex);
+                    continue;
+                }
+                break;
+            case BASE_BIN:
+                if (c == '0' || c == '1') {
+                    consume_number(buf, c);
+                    advance_lex(lex);
+                    continue;
+                }
+                break;
+            default:
+                error_hypex();
                 break;
         }
-        if (potential_fstring && input[current] == '"') {
-            buf.type = FSTRING;
-            buf.line = tokens[*len - 1].line;
-            buf.col = tokens[*len - 1].col;
-            current++;
-            bool escape_string = false;
-            while (current < inputlen && !(input[current] == '"' && !escape_string)) {
-                if (input[current] == '\\') {
-                    escape_string = true;
-                    consume_token(&buf, input[current]);
-                    current++;
-                }
-                if (current < inputlen) {
-                    consume_token(&buf, input[current]);
-                    current++;
-                    if (escape_string)
-                        escape_string = false;
-                }
-            }
-            current++;
-            potential_fstring = false;
-            tokens[*len - 1] = buf;
-            buf = make_token(UNKNOWN, line, current);
-            if (current >= inputlen)
-                break;
+        break;
+    }
+    if (buf->type == FLOAT && buf->base == BASE_HEX && !buf->is_exponent) error_number(lex->file, lex->pos.line, lex->pos.column, buf->value);
+    if (buf->value[buf->len - 1] == '_' || buf->value[buf->len - 1] == '.') error_number(lex->file, lex->pos.line, lex->pos.column, buf->value);
+}
+
+static void lex_ident(Lexer *lex, Token *buf) {
+    buf->type = IDENT;
+    consume_token(buf, current_lex(lex));
+    advance_lex(lex);
+    while (match_lex(lex) && is_ident_body(lex)) {
+        consume_token(buf, current_lex(lex));
+        advance_lex(lex);
+    }
+    const int id = match_keyword(buf->value);
+    if (id != -1) {
+        buf->type = KEYWORD;
+        buf->value = NULL;
+        buf->id = id;
+    } else {
+        if (strcmp(buf->value, "f") == 0)
+            lex->potential_fstring = true;
+        if (strcmp(buf->value, "r") == 0)
+            lex->potential_rstring = true;
+    }
+}
+
+void tokenize(Lexer *lex) {
+
+    while (match_lex(lex)) {
+
+        if (lex->newline) {
+            lex->newline = false;
+            lex->pos.line++;
+            lex->pos.column = 1;
         }
-        if (potential_rstring && input[current] == '"') {
-            buf.type = RSTRING;
-            buf.line = tokens[*len - 1].line;
-            buf.col = tokens[*len - 1].col;
-            current++;
-            while (current < inputlen && input[current] != '"') {
-                consume_token(&buf, input[current]);
-                current++;
+
+        if (lex->potential_fstring) {
+            lex->potential_fstring = false;
+            if (current_lex(lex) == '"') {
+                consume_lex(lex, make_token(FSTRING_START, lex->pos));
+                lex->fstring_body = true;
+                advance_lex(lex);
+                continue;
             }
-            current++;
-            potential_rstring = false;
-            tokens[*len - 1] = buf;
-            buf = make_token(UNKNOWN, line, current);
-            if (current >= inputlen)
-                break;
         }
-        switch (input[current]) {
+        if (lex->potential_rstring) {
+            lex->potential_rstring = false;
+            if (current_lex(lex) == '"') {
+                lex_rstring(lex);
+                continue;
+            }
+        }
+
+        Token *buf = make_token(UNKNOWN, lex->pos);
+
+        if (lex->fstring_expr && current_lex(lex) == '}') {
+            lex->fstring_expr = false;
+            lex->fstring_body = true;
+            advance_lex(lex);
+            continue;
+        }
+        if (lex->fstring_body) {
+            lex_fstring_body(lex, buf);
+            continue;
+        }
+
+        switch (current_lex(lex)) {
             case '=':
-                buf.type = EQUAL;
-                current++;
-                if (current < inputlen) {
-                    switch (input[current]) {
+                buf->type = EQUAL;
+                buf->len++;
+                advance_lex(lex);
+                if (match_lex(lex)) {
+                    switch (current_lex(lex)) {
                         case '=':
-                            buf.type = TWO_EQ;
-                            current++;
+                            buf->type = TWO_EQ;
+                            buf->len++;
+                            advance_lex(lex);
                             break;
                     }
                 }
                 break;
             case '+':
-                buf.type = PLUS;
-                current++;
-                if (current < inputlen) {
-                    switch (input[current]) {
+                buf->type = PLUS;
+                buf->len++;
+                advance_lex(lex);
+                if (match_lex(lex)) {
+                    switch (current_lex(lex)) {
                         case '=':
-                            buf.type = PLUS_EQ;
-                            current++;
+                            buf->type = PLUS_EQ;
+                            buf->len++;
+                            advance_lex(lex);
                             break;
                         case '+':
-                            buf.type = INCREASE;
-                            current++;
+                            buf->type = INCREASE;
+                            buf->len++;
+                            advance_lex(lex);
                             break;
                     }
                 }
                 break;
             case '-':
-                buf.type = MINUS;
-                current++;
-                if (current < inputlen) {
-                    switch (input[current]) {
+                buf->type = MINUS;
+                buf->len++;
+                advance_lex(lex);
+                if (match_lex(lex)) {
+                    switch (current_lex(lex)) {
                         case '=':
-                            buf.type = MINUS_EQ;
-                            current++;
+                            buf->type = MINUS_EQ;
+                            buf->len++;
+                            advance_lex(lex);
                             break;
                         case '-':
-                            buf.type = DECREASE;
-                            current++;
+                            buf->type = DECREASE;
+                            buf->len++;
+                            advance_lex(lex);
                             break;
                     }
                 }
                 break;
             case '*':
-                buf.type = STAR;
-                current++;
-                if (current < inputlen) {
-                    switch (input[current]) {
+                buf->type = STAR;
+                buf->len++;
+                advance_lex(lex);
+                if (match_lex(lex)) {
+                    switch (current_lex(lex)) {
                         case '=':
-                            buf.type = STAR_EQ;
-                            current++;
+                            buf->type = STAR_EQ;
+                            buf->len++;
+                            advance_lex(lex);
                             break;
                     }
                 }
                 break;
             case '/':
-                buf.type = SLASH;
-                current++;
-                if (current < inputlen) {
-                    switch (input[current]) {
+                buf->type = SLASH;
+                buf->len++;
+                advance_lex(lex);
+                if (match_lex(lex)) {
+                    switch (current_lex(lex)) {
                         case '=':
-                            buf.type = SLASH_EQ;
-                            current++;
+                            buf->type = SLASH_EQ;
+                            buf->len++;
+                            advance_lex(lex);
                             break;
                         case '/':
-                            buf.type = COMMENT_LINE;
-                            current++;
-                            while (current < inputlen) {
-                                consume_token(&buf, input[current]);
-                                current++;
-                            }
+                            lex_comment_line(lex, buf);
                             break;
                         case '*':
-                            buf.type = COMMENT_BLOCK;
-                            current++;
-                            *start_block = true;
-                            while (current < inputlen) {
-                                if (input[current] == '*') {
-                                    current++;
-                                    if (current < inputlen) {
-                                        if (input[current] == '/') {
-                                            *start_block = false;
-                                            current++;
-                                            break;
-                                        } else {
-                                            consume_token(&buf, input[current]);
-                                            current++;
-                                        }
-                                    }
-                                } else {
-                                    consume_token(&buf, input[current]);
-                                    current++;
-                                }
-                            }
+                            lex_comment_block(lex, buf);
                             break;
                     }
                 }
                 break;
             case '<':
-                buf.type = GREATER;
-                current++;
-                if (current < inputlen) {
-                    switch (input[current]) {
+                buf->type = LESS;
+                buf->len++;
+                advance_lex(lex);
+                if (match_lex(lex)) {
+                    switch (current_lex(lex)) {
                         case '=':
-                            buf.type = GREATER_EQ;
-                            current++;
+                            buf->type = LESS_EQ;
+                            buf->len++;
+                            advance_lex(lex);
                             break;
                         case '<':
-                            buf.type = LSHIFT;
-                            current++;
-                            if (current < inputlen) {
-                                switch (input[current]) {
+                            buf->type = LSHIFT;
+                            buf->len++;
+                            advance_lex(lex);
+                            if (match_lex(lex)) {
+                                switch (current_lex(lex)) {
                                     case '=':
-                                        buf.type = LSHIFT_EQ;
-                                        current++;
+                                        buf->type = LSHIFT_EQ;
+                                        buf->len++;
+                                        advance_lex(lex);
                                         break;
                                 }
                             }
@@ -287,22 +490,26 @@ Token *tokenize(const char *input, size_t *len, bool *start_block, const int lin
                 }
                 break;
             case '>':
-                buf.type = LESS;
-                current++;
-                if (current < inputlen) {
-                    switch (input[current]) {
+                buf->type = GREATER;
+                buf->len++;
+                advance_lex(lex);
+                if (match_lex(lex)) {
+                    switch (current_lex(lex)) {
                         case '=':
-                            buf.type = LESS_EQ;
-                            current++;
+                            buf->type = GREATER_EQ;
+                            buf->len++;
+                            advance_lex(lex);
                             break;
                         case '>':
-                            buf.type = RSHIFT;
-                            current++;
-                            if (current < inputlen) {
-                                switch (input[current]) {
+                            buf->type = RSHIFT;
+                            buf->len++;
+                            advance_lex(lex);
+                            if (match_lex(lex)) {
+                                switch (current_lex(lex)) {
                                     case '=':
-                                        buf.type = RSHIFT_EQ;
-                                        current++;
+                                        buf->type = RSHIFT_EQ;
+                                        buf->len++;
+                                        advance_lex(lex);
                                         break;
                                 }
                             }
@@ -311,222 +518,215 @@ Token *tokenize(const char *input, size_t *len, bool *start_block, const int lin
                 }
                 break;
             case '&':
-                buf.type = AMPER;
-                current++;
-                if (current < inputlen) {
-                    switch (input[current]) {
-                        case '&':
-                            buf.type = TWO_AMPER;
-                            current++;
-                            break;
+                buf->type = AMPER;
+                buf->len++;
+                advance_lex(lex);
+                if (match_lex(lex)) {
+                    switch (current_lex(lex)) {
                         case '=':
-                            buf.type = AMPER_EQ;
-                            current++;
+                            buf->type = AMPER_EQ;
+                            buf->len++;
+                            advance_lex(lex);
+                            break;
+                        case '&':
+                            buf->type = TWO_AMPER;
+                            buf->len++;
+                            advance_lex(lex);
                             break;
                     }
                 }
                 break;
             case '|':
-                buf.type = PIPE;
-                current++;
-                if (current < inputlen) {
-                    switch (input[current]) {
-                        case '|':
-                            buf.type = TWO_PIPE;
-                            current++;
-                            break;
+                buf->type = PIPE;
+                buf->len++;
+                advance_lex(lex);
+                if (match_lex(lex)) {
+                    switch (current_lex(lex)) {
                         case '=':
-                            buf.type = PIPE_EQ;
-                            current++;
+                            buf->type = PIPE_EQ;
+                            buf->len++;
+                            advance_lex(lex);
+                            break;
+                        case '|':
+                            buf->type = TWO_PIPE;
+                            buf->len++;
+                            advance_lex(lex);
                             break;
                     }
                 }
                 break;
             case '!':
-                buf.type = EXCLAMATION;
-                current++;
-                if (current < inputlen) {
-                    switch (input[current]) {
+                buf->type = EXCLAMATION;
+                buf->len++;
+                advance_lex(lex);
+                if (match_lex(lex)) {
+                    switch (current_lex(lex)) {
                         case '=':
-                            buf.type = EXCLAMATION_EQ;
-                            current++;
+                            buf->type = EXCLAMATION_EQ;
+                            buf->len++;
+                            advance_lex(lex);
                             break;
                     }
                 }
                 break;
             case '%':
-                buf.type = PERCENT;
-                current++;
-                if (current < inputlen) {
-                    switch (input[current]) {
+                buf->type = PERCENT;
+                buf->len++;
+                advance_lex(lex);
+                if (match_lex(lex)) {
+                    switch (current_lex(lex)) {
                         case '=':
-                            buf.type = PERCENT_EQ;
-                            current++;
+                            buf->type = PERCENT_EQ;
+                            buf->len++;
+                            advance_lex(lex);
                             break;
                     }
                 }
                 break;
             case '.':
-                buf.type = DOT;
-                current++;
-                break;
-            case ',':
-                buf.type = COMMA;
-                current++;
-                break;
-            case ':':
-                buf.type = COLON;
-                current++;
-                break;
-            case ';':
-                buf.type = SEMI;
-                current++;
-                break;
-            case '_':
-                buf.type = UNDERSCORE;
-                consume_token(&buf, input[current]);
-                current++;
-                if (current < inputlen && is_ident_body(input[current])) {
-                    buf.type = IDENT;
-                    consume_token(&buf, input[current]);
-                    current++;
-                    while (current < inputlen && is_ident_body(input[current])) {
-                        consume_token(&buf, input[current]);
-                        current++;
-                    }
-                }
-                break;
-            case '?':
-                buf.type = QUEST;
-                current++;
-                break;
-            case '(':
-                buf.type = LPAR;
-                current++;
-                break;
-            case ')':
-                buf.type = RPAR;
-                current++;
-                break;
-            case '[':
-                buf.type = LSQB;
-                current++;
-                break;
-            case ']':
-                buf.type = RSQB;
-                current++;
-                break;
-            case '{':
-                buf.type = LBRACE;
-                current++;
-                break;
-            case '}':
-                buf.type = RBRACE;
-                current++;
-                break;
-            case '~':
-                buf.type = TILDE;
-                current++;
-                break;
-            case '^':
-                buf.type = CARET;
-                current++;
-                if (current < inputlen) {
-                    switch (input[current]) {
-                        case '=':
-                            buf.type = CARET_EQ;
-                            current++;
+                buf->type = DOT;
+                buf->len++;
+                advance_lex(lex);
+                if (match_lex(lex)) {
+                    switch (current_lex(lex)) {
+                        case '.':
+                            buf->type = TWO_DOT;
+                            buf->len++;
+                            advance_lex(lex);
+                            if (match_lex(lex)) {
+                                switch (current_lex(lex)) {
+                                    case '.':
+                                        buf->type = ELLIPSIS;
+                                        buf->len++;
+                                        advance_lex(lex);
+                                        break;
+                                }
+                            }
                             break;
                     }
                 }
                 break;
+            case ',':
+                buf->type = COMMA;
+                buf->len++;
+                advance_lex(lex);
+                break;
+            case ':':
+                buf->type = COLON;
+                buf->len++;
+                advance_lex(lex);
+                break;
+            case ';':
+                buf->type = SEMI;
+                buf->len++;
+                advance_lex(lex);
+                break;
+            case '_':
+                buf->type = UNDERSCORE;
+                buf->len++;
+                advance_lex(lex);
+                break;
+            case '?':
+                buf->type = QUEST;
+                buf->len++;
+                advance_lex(lex);
+                break;
+            case '(':
+                buf->type = LPAR;
+                buf->len++;
+                advance_lex(lex);
+                break;
+            case ')':
+                buf->type = RPAR;
+                buf->len++;
+                advance_lex(lex);
+                break;
+            case '[':
+                buf->type = LSQB;
+                buf->len++;
+                advance_lex(lex);
+                break;
+            case ']':
+                buf->type = RSQB;
+                buf->len++;
+                advance_lex(lex);
+                break;
+            case '{':
+                buf->type = LBRACE;
+                buf->len++;
+                advance_lex(lex);
+                break;
+            case '}':
+                buf->type = RBRACE;
+                buf->len++;
+                advance_lex(lex);
+                break;
+            case '^':
+                buf->type = CARET;
+                buf->len++;
+                advance_lex(lex);
+                if (match_lex(lex)) {
+                    switch (current_lex(lex)) {
+                        case '=':
+                            buf->type = CARET_EQ;
+                            buf->len++;
+                            advance_lex(lex);
+                            break;
+                    }
+                }
+                break;
+            case '~':
+                buf->type = TILDE;
+                buf->len++;
+                advance_lex(lex);
+                break;
             case '@':
-                buf.type = AT;
-                current++;
+                buf->type = AT;
+                buf->len++;
+                advance_lex(lex);
                 break;
             case '#':
-                buf.type = HASH;
-                current++;
+                buf->type = HASH;
+                buf->len++;
+                advance_lex(lex);
                 break;
             case ' ':
-                buf.type = SPACE;
-                buf.len++;
-                current++;
-                while (current < inputlen && input[current] == ' ') {
-                    buf.len++;
-                    current++;
+                buf->type = SPACE;
+                buf->len++;
+                advance_lex(lex);
+                while (match_lex(lex) && current_lex(lex) == ' ') {
+                    buf->len++;
+                    advance_lex(lex);
                 }
                 break;
             case '\'':
-                buf.type = CHAR;
-                current++;
-                bool escape_char = false;
-                while (current < inputlen && !(input[current] == '\'' && !escape_char)) {
-                    if (input[current] == '\\') {
-                        escape_char = true;
-                        consume_token(&buf, input[current]);
-                        current++;
-                    }
-                    if (current < inputlen) {
-                        consume_token(&buf, input[current]);
-                        current++;
-                        if (escape_char)
-                            escape_char = false;
-                    }
-                }
-                current++;
+                buf->type = CHAR;
+                lex_literal(lex, buf, '\'');
                 break;
             case '"':
-                buf.type = STRING;
-                current++;
-                bool escape_string = false;
-                while (current < inputlen && !(input[current] == '"' && !escape_string)) {
-                    if (input[current] == '\\') {
-                        escape_string = true;
-                        consume_token(&buf, input[current]);
-                        current++;
-                    }
-                    if (current < inputlen) {
-                        consume_token(&buf, input[current]);
-                        current++;
-                        if (escape_string)
-                            escape_string = false;
-                    }
-                }
-                current++;
+                buf->type = STRING;
+                lex_literal(lex, buf, '"');
                 break;
             default:
-                if (isdigit(input[current])) {
-                    buf.type = INTEGER;
-                    consume_token(&buf, input[current]);
-                    current++;
-                    while (current < inputlen && (isdigit(input[current]) || (input[current] == '.' && buf.type != FLOAT))) {
-                        if (input[current] == '.')
-                            buf.type = FLOAT;
-                        consume_token(&buf, input[current]);
-                        current++;
-                    }
-                } else if (isalpha(input[current])) {
-                    buf.type = IDENT;
-                    consume_token(&buf, input[current]);
-                    current++;
-                    while (current < inputlen && is_ident_body(input[current])) {
-                        consume_token(&buf, input[current]);
-                        current++;
-                    }
-                } else {
-                    error_char(line, current, input[current]);
-                }
+                if (is_eol(lex))
+                    lex_eol(lex, buf);
+                else if (is_number(lex))
+                    lex_number(lex, buf);
+                else if (is_letter(lex))
+                    lex_ident(lex, buf);
+                else
+                    error_char(lex->file, lex->pos.line, lex->pos.column, current_lex(lex));
                 break;
         }
-        if (buf.type == IDENT && is_keyword(buf.data, buf.len))
-            buf.type = KEYWORD;
-        if (buf.type == IDENT && strcmp(buf.data, "f") == 0)
-            potential_fstring = true;
-        if (buf.type == IDENT && strcmp(buf.data, "r") == 0)
-            potential_rstring = true;
-        push_token(&tokens, len, buf);
+        consume_lex(lex, buf);
     }
-    push_token(&tokens, len, make_token(EOL, line, current));
-    return tokens;
+}
+
+void free_lex(Lexer *lex) {
+    free(lex->input);
+    free(lex->file);
+    for (int i = 0; i < lex->len; i++)
+        free_token(lex->tok_list[i]);
+    free(lex->tok_list);
+    free(lex);
 }

@@ -4,12 +4,12 @@ Constants are variables whose value does not change. When constants are defined,
 
 ```
 // Constant define
-const pi = 3.14
+const PI = 3.14
 ```
 
 ```
 // Constant define by type
-const:float e = 2.71
+const:float E = 2.71
 ```
 
 [Index](index.md) | [<< Back](8_variables.md) | [Next >>](10_if_else_statement.md)
