@@ -11,12 +11,12 @@
 #define KWLEN 41
 
 const char *KWLIST[KWLEN] = {
-    "if", 
+    "if",
     "for", "int", "try", "use", "var",
     "base", "bool", "case", "char", "elif", "else", "enum", "func", "long", "null", "self", "true", "uint",
     "async", "await", "break", "catch", "class", "const", "false", "float", "short", "throw", "ulong", "while", "yield",
     "double", "object", "return", "string", "struct", "switch", "ushort",
-    "continue", 
+    "continue",
     "interface"
 };
 
