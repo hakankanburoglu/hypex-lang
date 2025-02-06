@@ -23,7 +23,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 6:14 SPACE len:1
 6:15 EQUAL len:1
 6:16 SPACE len:1
-6:17 INTEGER value:`1` num_value=`1` num_len:1 len:1
+6:17 INTEGER value:`1` num_value:`1` num_len:1 len:1
 6:18 SPACE len:1
 6:19 COMMENT_LINE value:`this is a comment line` len:22
 6:43 EOL len:0
@@ -38,7 +38,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 7:42 SPACE len:1
 7:43 EQUAL len:1
 7:44 SPACE len:1
-7:45 INTEGER value:`2` num_value=`2` num_len:1 len:1
+7:45 INTEGER value:`2` num_value:`2` num_len:1 len:1
 7:46 EOL len:0
 8:1 SPACE len:4
 8:5 IDENT value:`var` len:3
@@ -49,7 +49,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 8:14 SPACE len:1
 8:15 EQUAL len:1
 8:16 SPACE len:1
-8:17 INTEGER value:`3` num_value=`3` num_len:1 len:1
+8:17 INTEGER value:`3` num_value:`3` num_len:1 len:1
 8:18 SPACE len:1
 8:19 COMMENT_BLOCK value:`another multi-line ` len:19
 8:40 COMMENT_EOL len:0
@@ -63,7 +63,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 9:30 SPACE len:1
 9:31 EQUAL len:1
 9:32 SPACE len:1
-9:33 INTEGER value:`4` num_value=`4` num_len:1 len:1
+9:33 INTEGER value:`4` num_value:`4` num_len:1 len:1
 9:34 EOL len:0
 10:1 EOL len:0
 11:1 SPACE len:4
@@ -76,7 +76,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 12:13 SPACE len:1
 12:14 EQUAL len:1
 12:15 SPACE len:1
-12:16 FLOAT value:`3.14` num_value=`3.14` num_len:4 len:4
+12:16 FLOAT value:`3.14` num_value:`3.14` num_len:4 len:4
 12:20 EOL len:0
 13:1 SPACE len:4
 13:5 IDENT value:`var` len:3
@@ -85,7 +85,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 13:12 SPACE len:1
 13:13 EQUAL len:1
 13:14 SPACE len:1
-13:15 INTEGER value:`10` num_value=`10` num_len:2 len:2
+13:15 INTEGER value:`10` num_value:`10` num_len:2 len:2
 13:17 EOL len:0
 14:1 SPACE len:4
 14:5 IDENT value:`var` len:3
@@ -94,7 +94,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 14:12 SPACE len:1
 14:13 EQUAL len:1
 14:14 SPACE len:1
-14:15 INTEGER value:`0xa` base_hex num_value=`0xa` num_len:3 len:3
+14:15 INTEGER value:`0xa` base_hex num_value:`0xa` num_len:3 len:3
 14:18 EOL len:0
 15:1 SPACE len:4
 15:5 IDENT value:`var` len:3
@@ -103,7 +103,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 15:12 SPACE len:1
 15:13 EQUAL len:1
 15:14 SPACE len:1
-15:15 INTEGER value:`0o12` base_oct num_value=`0o12` num_len:4 len:4
+15:15 INTEGER value:`0o12` base_oct num_value:`0o12` num_len:4 len:4
 15:19 EOL len:0
 16:1 SPACE len:4
 16:5 IDENT value:`var` len:3
@@ -112,7 +112,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 16:12 SPACE len:1
 16:13 EQUAL len:1
 16:14 SPACE len:1
-16:15 INTEGER value:`0b1010` base_bin num_value=`0b1010` num_len:6 len:6
+16:15 INTEGER value:`0b1010` base_bin num_value:`0b1010` num_len:6 len:6
 16:21 EOL len:0
 17:1 SPACE len:4
 17:5 IDENT value:`var` len:3
@@ -121,7 +121,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 17:10 SPACE len:1
 17:11 EQUAL len:1
 17:12 SPACE len:1
-17:13 FLOAT value:`1.2e3` exponent num_value=`1.2e3` num_len:5 len:5
+17:13 FLOAT value:`1.2e3` exponent num_value:`1.2e3` num_len:5 len:5
 17:18 EOL len:0
 18:1 SPACE len:4
 18:5 IDENT value:`var` len:3
@@ -130,7 +130,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 18:10 SPACE len:1
 18:11 EQUAL len:1
 18:12 SPACE len:1
-18:13 INTEGER value:`0x1fp2` base_hex exponent num_value=`0x1fp2` num_len:6 len:6
+18:13 INTEGER value:`0x1fp2` base_hex exponent num_value:`0x1fp2` num_len:6 len:6
 18:19 EOL len:0
 19:1 SPACE len:4
 19:5 IDENT value:`var` len:3
@@ -139,7 +139,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 19:11 SPACE len:1
 19:12 EQUAL len:1
 19:13 SPACE len:1
-19:14 FLOAT value:`1.2e-3` negative_exponent num_value=`1.2e-3` num_len:6 len:6
+19:14 FLOAT value:`1.2e-3` negative_exponent num_value:`1.2e-3` num_len:6 len:6
 19:20 EOL len:0
 20:1 SPACE len:4
 20:5 IDENT value:`var` len:3
@@ -148,7 +148,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 20:11 SPACE len:1
 20:12 EQUAL len:1
 20:13 SPACE len:1
-20:14 INTEGER value:`0x1fp-2` base_hex negative_exponent num_value=`0x1fp-2` num_len:7 len:7
+20:14 INTEGER value:`0x1fp-2` base_hex negative_exponent num_value:`0x1fp-2` num_len:7 len:7
 20:21 EOL len:0
 21:1 SPACE len:4
 21:5 IDENT value:`var` len:3
@@ -157,7 +157,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 21:12 SPACE len:1
 21:13 EQUAL len:1
 21:14 SPACE len:1
-21:15 INTEGER value:`1_000_000` num_value=`1000000` num_len:7 len:9
+21:15 INTEGER value:`1_000_000` num_value:`1000000` num_len:7 len:9
 21:24 EOL len:0
 22:1 EOL len:0
 23:1 SPACE len:4
@@ -192,17 +192,17 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 25:13 IDENT value:`f` len:1
 25:14 FSTRING_START len:0
 25:15 FSTRING_BODY value:`1 + 2 = ` len:8
-25:24 INTEGER value:`1` num_value=`1` num_len:1 len:1
+25:24 INTEGER value:`1` num_value:`1` num_len:1 len:1
 25:25 SPACE len:1
 25:26 PLUS len:1
 25:27 SPACE len:1
-25:28 INTEGER value:`2` num_value=`2` num_len:1 len:1
+25:28 INTEGER value:`2` num_value:`2` num_len:1 len:1
 25:30 FSTRING_BODY value:`\n3 + 4 = ` len:10
-25:41 INTEGER value:`3` num_value=`3` num_len:1 len:1
+25:41 INTEGER value:`3` num_value:`3` num_len:1 len:1
 25:42 SPACE len:1
 25:43 PLUS len:1
 25:44 SPACE len:1
-25:45 INTEGER value:`4` num_value=`4` num_len:1 len:1
+25:45 INTEGER value:`4` num_value:`4` num_len:1 len:1
 25:47 FSTRING_BODY len:0
 25:47 FSTRING_END len:0
 25:48 SPACE len:1
@@ -255,10 +255,10 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 32:12 SPACE len:1
 32:13 IDENT value:`range` len:5
 32:18 LPAR len:1
-32:19 INTEGER value:`0` num_value=`0` num_len:1 len:1
+32:19 INTEGER value:`0` num_value:`0` num_len:1 len:1
 32:20 COMMA len:1
 32:21 SPACE len:1
-32:22 INTEGER value:`10` num_value=`10` num_len:2 len:2
+32:22 INTEGER value:`10` num_value:`10` num_len:2 len:2
 32:24 RPAR len:1
 32:25 COLON len:1
 32:26 EOL len:0
@@ -271,10 +271,10 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 33:16 SPACE len:1
 33:17 IDENT value:`range` len:5
 33:22 LPAR len:1
-33:23 INTEGER value:`0` num_value=`0` num_len:1 len:1
+33:23 INTEGER value:`0` num_value:`0` num_len:1 len:1
 33:24 COMMA len:1
 33:25 SPACE len:1
-33:26 INTEGER value:`10` num_value=`10` num_len:2 len:2
+33:26 INTEGER value:`10` num_value:`10` num_len:2 len:2
 33:28 RPAR len:1
 33:29 COLON len:1
 33:30 EOL len:0
@@ -307,10 +307,10 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 36:12 SPACE len:1
 36:13 IDENT value:`range` len:5
 36:18 LPAR len:1
-36:19 INTEGER value:`0` num_value=`0` num_len:1 len:1
+36:19 INTEGER value:`0` num_value:`0` num_len:1 len:1
 36:20 COMMA len:1
 36:21 SPACE len:1
-36:22 INTEGER value:`10` num_value=`10` num_len:2 len:2
+36:22 INTEGER value:`10` num_value:`10` num_len:2 len:2
 36:24 RPAR len:1
 36:25 COLON len:1
 36:26 EOL len:0
