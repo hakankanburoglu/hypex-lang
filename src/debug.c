@@ -8,7 +8,7 @@
 
 void print_token_type(int type) {
     switch (type) {
-        case UNKNOWN: printf("UNKNOWN[%d]", type); break;
+        case UNKNOWN: printf("UNKNOWN"); break;
         case EQUAL: printf("EQUAL"); break;
         case PLUS: printf("PLUS"); break;
         case MINUS: printf("MINUS"); break;
@@ -149,7 +149,7 @@ void print_token(Token tok) {
         }
         if (tok.is_exponent && tok.is_negative) printf(" negative_exponent");
         if (tok.is_exponent && !tok.is_negative) printf(" exponent");
-        printf(" num_value=`%s` num_len:%d", tok.num_value, tok.num_len);
+        printf(" num_value:`%s` num_len:%d", tok.num_value, tok.num_len);
     }
     printf(" len:%d\n", tok.len);
 }
