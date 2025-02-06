@@ -136,6 +136,17 @@ static void lex_eol(Lexer *lex, Token *buf) {
     advance_lex(lex);
 }
 
+static void lex_comment_eol(Lexer *lex, Token *buf) {
+    consume_lex(lex, copy_token(buf));
+    buf->value = NULL;
+    buf->len = 0;
+    consume_lex(lex, make_token(COMMENT_EOL, lex->pos));
+    consume_lex(lex, make_token(EOL, lex->pos));
+    lex->pos.line++;
+    lex->pos.column = 0;
+    advance_lex(lex);
+}
+
 static void lex_comment_line(Lexer *lex, Token *buf) {
     buf->type = COMMENT_LINE;
     advance_lex(lex);
@@ -150,13 +161,7 @@ static void lex_comment_block(Lexer *lex, Token *buf) {
     advance_lex(lex);
     while (match_lex(lex)) {
         if (is_eol(lex)) {
-            consume_lex(lex, copy_token(buf));
-            buf->value = NULL;
-            buf->len = 0;
-            consume_lex(lex, make_token(COMMENT_EOL, lex->pos));
-            lex->pos.line++;
-            lex->pos.column = 0;
-            advance_lex(lex);
+            lex_comment_eol(lex, buf);
             if (!match_lex(lex)) return;
         }
         if (current_lex(lex) == '*') {
@@ -167,6 +172,10 @@ static void lex_comment_block(Lexer *lex, Token *buf) {
                 return;
             }
             consume_token(buf, '*');
+            if (is_eol(lex)) {
+                lex_comment_eol(lex, buf);
+                if (!match_lex(lex)) return;
+            }
         }
         consume_token(buf, current_lex(lex));
         advance_lex(lex);
