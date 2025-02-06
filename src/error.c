@@ -26,12 +26,12 @@ void error_file_read(const char *file) {
 
 void error_char(const char *file, int line, int col, char c) {
     if (file != NULL) fprintf(stderr, "%s:", file);
-    fprintf(stderr, "%d:%d invalid character: '%c' (0x%x)\n", line + 1, col + 1, c, c);
+    fprintf(stderr, "%d:%d invalid character: '%c' (0x%x)\n", line, col, c, c);
     exit(EXIT_FAILURE);
 }
 
 void error_number(const char *file, int line, int col, const char *value) {
     if (file != NULL) fprintf(stderr, "%s:", file);
-    fprintf(stderr, "%d:%d invalid number literal: %s\n", line + 1, col + 1, value);
+    fprintf(stderr, "%d:%d invalid number literal: %s\n", line, col, value);
     exit(EXIT_FAILURE);
 }
