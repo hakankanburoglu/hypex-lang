@@ -71,12 +71,12 @@ static inline bool match_lex(const Lexer *lex) {
     return lex->offset < lex->inputlen;
 }
 
-// Overflow warning: Input length is not checked in this function.
+// overflow warning: input length is not checked in this function
 static inline char current_lex(const Lexer *lex) {
     return lex->input[lex->offset];
 }
 
-// Overflow warning: Input length is not checked in this function.
+// overflow warning: input length is not checked in this function
 static inline void advance_lex(Lexer *lex) {
     lex->offset++;
     lex->pos.column++;
