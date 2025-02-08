@@ -128,11 +128,11 @@ void print_keyword(int id) {
 
 void print_base(int base) {
     switch (base) {
-        case BASE_DEC: printf("base_dec"); break;
-        case BASE_HEX: printf("base_hex"); break;
-        case BASE_OCT: printf("base_oct"); break;
-        case BASE_BIN: printf("base_bin"); break;
-        default: printf("base?[%d]", base); break;
+        case BASE_DEC: printf("BASE_DEC"); break;
+        case BASE_HEX: printf("BASE_HEX"); break;
+        case BASE_OCT: printf("BASE_OCT"); break;
+        case BASE_BIN: printf("BASE_BIN"); break;
+        default: printf("BASE?[%d]", base); break;
     }
 }
 
@@ -140,19 +140,20 @@ void print_token(Token tok) {
     printf("%d:%d ", tok.pos.line, tok.pos.column);
     (tok.type != KEYWORD) ? print_token_type(tok.type) : print_keyword(tok.type);
     if (tok.value != NULL)
-        printf(" value:`%s`", tok.value);
+        printf(" `%s`", tok.value);
     if (tok.type == INTEGER || tok.type == FLOAT) {
         if (tok.base != 0) {
             printf(" ");
             print_base(tok.base);
         }
-        if (tok.is_exponent && tok.is_negative) printf(" negative_exponent");
-        if (tok.is_exponent && !tok.is_negative) printf(" exponent");
+        if (tok.is_exponent) {
+            if (tok.is_negative) printf(" negative_exponent");
+            else printf(" exponent");
+        }
         printf(" num_value:`%s` num_len:%d", tok.num_value, tok.num_len);
     }
-    if (tok.type == EOL && tok.is_comment) {
+    if (tok.type == EOL && tok.is_comment)
         printf(" (comment)");
-    }
     printf(" len:%d\n", tok.len);
 }
 
