@@ -66,7 +66,6 @@ enum {
     KEYWORD,
     COMMENT_LINE,
     COMMENT_BLOCK,
-    COMMENT_EOL,
     CHAR,
     STRING,
     FSTRING_START,
@@ -151,6 +150,8 @@ typedef struct {
             bool is_exponent;
             bool is_negative;
         };
+        //EOL
+        bool is_comment;
     };
 } Token;
 

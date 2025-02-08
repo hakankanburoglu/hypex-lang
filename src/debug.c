@@ -65,7 +65,6 @@ void print_token_type(int type) {
         case KEYWORD: printf("KEYWORD"); break;
         case COMMENT_LINE: printf("COMMENT_LINE"); break;
         case COMMENT_BLOCK: printf("COMMENT_BLOCK"); break;
-        case COMMENT_EOL: printf("COMMENT_EOL"); break;
         case CHAR: printf("CHAR"); break;
         case STRING: printf("STRING"); break;
         case FSTRING_START: printf("FSTRING_START"); break;
@@ -150,6 +149,9 @@ void print_token(Token tok) {
         if (tok.is_exponent && tok.is_negative) printf(" negative_exponent");
         if (tok.is_exponent && !tok.is_negative) printf(" exponent");
         printf(" num_value:`%s` num_len:%d", tok.num_value, tok.num_len);
+    }
+    if (tok.type == EOL && tok.is_comment) {
+        printf(" (comment)");
     }
     printf(" len:%d\n", tok.len);
 }

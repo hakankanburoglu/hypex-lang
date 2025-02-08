@@ -132,6 +132,7 @@ static int match_base(char c) {
 
 static void lex_eol(Lexer *lex, Token *buf) {
     buf->type = EOL;
+    buf->is_comment = false;
     lex->newline = true;
     advance_lex(lex);
 }
@@ -140,8 +141,8 @@ static void lex_comment_eol(Lexer *lex, Token *buf) {
     consume_lex(lex, copy_token(buf));
     buf->value = NULL;
     buf->len = 0;
-    consume_lex(lex, make_token(COMMENT_EOL, lex->pos));
     consume_lex(lex, make_token(EOL, lex->pos));
+    lex->tok_list[lex->len - 1]->is_comment = true;
     lex->pos.line++;
     lex->pos.column = 0;
     advance_lex(lex);
