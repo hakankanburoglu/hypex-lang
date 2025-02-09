@@ -7,6 +7,7 @@
 
 void error_hypex() {
     fprintf(stderr, "hypex error\n");
+    exit(EXIT_FAILURE);
 }
 
 void error_file(const char *file) {
