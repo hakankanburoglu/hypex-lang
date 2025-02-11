@@ -82,25 +82,12 @@ static inline void advance_lex(Lexer *lex) {
     lex->pos.column++;
 }
 
-// for platform-dependent line feeds
-static inline bool is_eol(Lexer *lex) {
-    if (current_lex(lex) == '\r') {
-        advance_lex(lex);
-        if (!match_lex(lex))
-            return true;
-        if (current_lex(lex) == '\n') //CRLF
-            return true;
-        return true; //CR
-    }
-    return current_lex(lex) == '\n'; //LF
+static inline bool is_number(const Lexer *lex) {
+    return isdigit(current_lex(lex));
 }
 
 static inline bool is_letter(const Lexer *lex) {
     return isalpha(current_lex(lex));
-}
-
-static inline bool is_number(const Lexer *lex) {
-    return isdigit(current_lex(lex));
 }
 
 static inline bool is_exponent(const Token *buf, char c) {
@@ -116,9 +103,17 @@ static inline bool is_ident_body(const Lexer *lex) {
     return isalnum(c) || c == '_';
 }
 
-static inline int match_keyword(const char *s) {
-    const char **res = (const char **)bsearch(s, KWLIST, KWLEN, sizeof(KWLIST[0]), (int (*)(const void *, const void *))strcmp);
-    return res ? (int)(res - KWLIST) : -1;
+// for platform-dependent line feeds
+static inline bool is_eol(Lexer *lex) {
+    if (current_lex(lex) == '\r') {
+        advance_lex(lex);
+        if (!match_lex(lex))
+            return true;
+        if (current_lex(lex) == '\n') //CRLF
+            return true;
+        return true; //CR
+    }
+    return current_lex(lex) == '\n'; //LF
 }
 
 static int match_base(char c) {
@@ -130,11 +125,115 @@ static int match_base(char c) {
     }
 }
 
-static void lex_eol(Lexer *lex, Token *buf) {
-    buf->type = EOL;
-    buf->is_comment = false;
-    lex->newline = true;
+static inline int match_keyword(const char *s) {
+    const char **res = (const char **)bsearch(s, KWLIST, KWLEN, sizeof(KWLIST[0]), (int (*)(const void *, const void *))strcmp);
+    return res ? (int)(res - KWLIST) : -1;
+}
+
+static inline void lex_operator(Lexer *lex, Token *buf, int type) {
+    buf->type = type;
+    buf->len++;
     advance_lex(lex);
+}
+
+static inline void lex_digit(Lexer *lex, Token *buf, char c) {
+    consume_number(buf, c);
+    advance_lex(lex);
+}
+
+static void lex_number(Lexer *lex, Token *buf) {
+    buf->type = INTEGER;
+    init_number(buf);
+    lex_digit(lex, buf, current_lex(lex));
+    if (buf->value[0] == '0') {
+        const int base = match_base(current_lex(lex));
+        if (base != 0) {
+            buf->base = base;
+            lex_digit(lex, buf, current_lex(lex));
+        }
+    }
+    while (match_lex(lex)) {
+        const char c = current_lex(lex);
+        if (c == '_') {
+            consume_token(buf, c);
+            advance_lex(lex);
+            continue;
+        }
+        if (buf->is_exponent) {
+            if (isdigit(c)) {
+                lex_digit(lex, buf, c);
+                continue;
+            }
+            if (!buf->is_negative && c == '-') {
+                buf->is_negative = true;
+                lex_digit(lex, buf, c);
+                continue;
+            }
+        }
+        if (buf->type != FLOAT && c == '.') {
+            buf->type = FLOAT;
+            lex_digit(lex, buf, c);
+            continue;
+        }
+        if (is_exponent(buf, c)) {
+            buf->is_exponent = true;
+            lex_digit(lex, buf, c);
+            continue;
+        }
+        switch (buf->base) {
+            case BASE_DEC:
+                if (isdigit(c)) {
+                    lex_digit(lex, buf, c);
+                    continue;
+                }
+                break;
+            case BASE_HEX:
+                if (isxdigit(c)) {
+                    lex_digit(lex, buf, c);
+                    continue;
+                }
+                break;
+            case BASE_OCT:
+                if (c >= '0' && c <= '7') {
+                    lex_digit(lex, buf, c);
+                    continue;
+                }
+                break;
+            case BASE_BIN:
+                if (c == '0' || c == '1') {
+                    lex_digit(lex, buf, c);
+                    continue;
+                }
+                break;
+            default:
+                error_hypex();
+                break;
+        }
+        break;
+    }
+    if (buf->type == FLOAT && buf->base == BASE_HEX && !buf->is_exponent) error_number(lex->file, lex->pos.line, lex->pos.column, buf->value);
+    if (buf->value[buf->len - 1] == '_' || buf->value[buf->len - 1] == '.') error_number(lex->file, lex->pos.line, lex->pos.column, buf->value);
+}
+
+static void lex_ident(Lexer *lex, Token *buf) {
+    buf->type = IDENT;
+    consume_token(buf, current_lex(lex));
+    advance_lex(lex);
+    while (match_lex(lex) && is_ident_body(lex)) {
+        consume_token(buf, current_lex(lex));
+        advance_lex(lex);
+    }
+    const int id = match_keyword(buf->value);
+    if (id != -1) {
+        buf->type = KEYWORD;
+        buf->value = NULL;
+        buf->id = id;
+    } else {
+        if (strcmp(buf->value, "f") == 0)
+            lex->potential_fstring = true;
+        if (strcmp(buf->value, "r") == 0)
+            lex->potential_rstring = true;
+    }
 }
 
 static void lex_comment_eol(Lexer *lex, Token *buf) {
@@ -241,109 +340,11 @@ static void lex_rstring(Lexer *lex) {
     advance_lex(lex);
 }
 
-static void lex_number(Lexer *lex, Token *buf) {
-    buf->type = INTEGER;
-    init_number(buf);
-    consume_number(buf, current_lex(lex));
+static void lex_eol(Lexer *lex, Token *buf) {
+    buf->type = EOL;
+    buf->is_comment = false;
+    lex->newline = true;
     advance_lex(lex);
-    if (buf->value[0] == '0') {
-        const int base = match_base(current_lex(lex));
-        if (base != 0) {
-            buf->base = base;
-            consume_number(buf, current_lex(lex));
-            advance_lex(lex);
-        }
-    }
-    while (match_lex(lex)) {
-        const char c = current_lex(lex);
-        if (c == '_') {
-            consume_token(buf, c);
-            advance_lex(lex);
-            continue;
-        }
-        if (buf->is_exponent) {
-            if (isdigit(c)) {
-                consume_number(buf, c);
-                advance_lex(lex);
-                continue;
-            }
-            if (!buf->is_negative && c == '-') {
-                buf->is_negative = true;
-                consume_number(buf, c);
-                advance_lex(lex);
-                continue;
-            }
-        }
-        if (buf->type != FLOAT && c == '.') {
-            buf->type = FLOAT;
-            consume_number(buf, c);
-            advance_lex(lex);
-            continue;
-        }
-        if (is_exponent(buf, c)) {
-            buf->is_exponent = true;
-            consume_number(buf, c);
-            advance_lex(lex);
-            continue;
-        }
-        switch (buf->base) {
-            case BASE_DEC:
-                if (isdigit(c)) {
-                    consume_number(buf, c);
-                    advance_lex(lex);
-                    continue;
-                }
-                break;
-            case BASE_HEX:
-                if (isxdigit(c)) {
-                    consume_number(buf, c);
-                    advance_lex(lex);
-                    continue;
-                }
-                break;
-            case BASE_OCT:
-                if (c >= '0' && c <= '7') {
-                    consume_number(buf, c);
-                    advance_lex(lex);
-                    continue;
-                }
-                break;
-            case BASE_BIN:
-                if (c == '0' || c == '1') {
-                    consume_number(buf, c);
-                    advance_lex(lex);
-                    continue;
-                }
-                break;
-            default:
-                error_hypex();
-                break;
-        }
-        break;
-    }
-    if (buf->type == FLOAT && buf->base == BASE_HEX && !buf->is_exponent) error_number(lex->file, lex->pos.line, lex->pos.column, buf->value);
-    if (buf->value[buf->len - 1] == '_' || buf->value[buf->len - 1] == '.') error_number(lex->file, lex->pos.line, lex->pos.column, buf->value);
-}
-
-static void lex_ident(Lexer *lex, Token *buf) {
-    buf->type = IDENT;
-    consume_token(buf, current_lex(lex));
-    advance_lex(lex);
-    while (match_lex(lex) && is_ident_body(lex)) {
-        consume_token(buf, current_lex(lex));
-        advance_lex(lex);
-    }
-    const int id = match_keyword(buf->value);
-    if (id != -1) {
-        buf->type = KEYWORD;
-        buf->value = NULL;
-        buf->id = id;
-    } else {
-        if (strcmp(buf->value, "f") == 0)
-            lex->potential_fstring = true;
-        if (strcmp(buf->value, "r") == 0)
-            lex->potential_rstring = true;
-    }
 }
 
 void tokenize(Lexer *lex) {
@@ -365,6 +366,7 @@ void tokenize(Lexer *lex) {
                 continue;
             }
         }
+
         if (lex->potential_rstring) {
             lex->potential_rstring = false;
             if (current_lex(lex) == '"') {
@@ -381,6 +383,7 @@ void tokenize(Lexer *lex) {
             advance_lex(lex);
             continue;
         }
+
         if (lex->fstring_body) {
             lex_fstring_body(lex, buf);
             continue;
@@ -388,81 +391,47 @@ void tokenize(Lexer *lex) {
 
         switch (current_lex(lex)) {
             case '=':
-                buf->type = EQUAL;
-                buf->len++;
-                advance_lex(lex);
-                if (match_lex(lex)) {
-                    switch (current_lex(lex)) {
-                        case '=':
-                            buf->type = TWO_EQ;
-                            buf->len++;
-                            advance_lex(lex);
-                            break;
-                    }
-                }
+                lex_operator(lex, buf, EQUAL);
+                if (match_lex(lex) && current_lex(lex) == '=')
+                    lex_operator(lex, buf, TWO_EQ);
                 break;
             case '+':
-                buf->type = PLUS;
-                buf->len++;
-                advance_lex(lex);
+                lex_operator(lex, buf, PLUS);
                 if (match_lex(lex)) {
                     switch (current_lex(lex)) {
                         case '=':
-                            buf->type = PLUS_EQ;
-                            buf->len++;
-                            advance_lex(lex);
+                            lex_operator(lex, buf, PLUS_EQ);
                             break;
                         case '+':
-                            buf->type = INCREASE;
-                            buf->len++;
-                            advance_lex(lex);
+                            lex_operator(lex, buf, INCREASE);
                             break;
                     }
                 }
                 break;
             case '-':
-                buf->type = MINUS;
-                buf->len++;
-                advance_lex(lex);
+                lex_operator(lex, buf, MINUS);
                 if (match_lex(lex)) {
                     switch (current_lex(lex)) {
                         case '=':
-                            buf->type = MINUS_EQ;
-                            buf->len++;
-                            advance_lex(lex);
+                            lex_operator(lex, buf, MINUS_EQ);
                             break;
                         case '-':
-                            buf->type = DECREASE;
-                            buf->len++;
-                            advance_lex(lex);
+                            lex_operator(lex, buf, DECREASE);
                             break;
                     }
                 }
                 break;
             case '*':
-                buf->type = STAR;
-                buf->len++;
-                advance_lex(lex);
-                if (match_lex(lex)) {
-                    switch (current_lex(lex)) {
-                        case '=':
-                            buf->type = STAR_EQ;
-                            buf->len++;
-                            advance_lex(lex);
-                            break;
-                    }
-                }
+                lex_operator(lex, buf, STAR);
+                if (match_lex(lex) && current_lex(lex) == '=')
+                    lex_operator(lex, buf, STAR_EQ);
                 break;
             case '/':
-                buf->type = SLASH;
-                buf->len++;
-                advance_lex(lex);
+                lex_operator(lex, buf, SLASH);
                 if (match_lex(lex)) {
                     switch (current_lex(lex)) {
                         case '=':
-                            buf->type = SLASH_EQ;
-                            buf->len++;
-                            advance_lex(lex);
+                            lex_operator(lex, buf, SLASH_EQ);
                             break;
                         case '/':
                             lex_comment_line(lex, buf);
@@ -474,238 +443,128 @@ void tokenize(Lexer *lex) {
                 }
                 break;
             case '<':
-                buf->type = LESS;
-                buf->len++;
-                advance_lex(lex);
+                lex_operator(lex, buf, LESS);
                 if (match_lex(lex)) {
                     switch (current_lex(lex)) {
                         case '=':
-                            buf->type = LESS_EQ;
-                            buf->len++;
-                            advance_lex(lex);
+                            lex_operator(lex, buf, LESS_EQ);
                             break;
                         case '<':
-                            buf->type = LSHIFT;
-                            buf->len++;
-                            advance_lex(lex);
-                            if (match_lex(lex)) {
-                                switch (current_lex(lex)) {
-                                    case '=':
-                                        buf->type = LSHIFT_EQ;
-                                        buf->len++;
-                                        advance_lex(lex);
-                                        break;
-                                }
-                            }
+                            lex_operator(lex, buf, LSHIFT);
+                            if (match_lex(lex) && current_lex(lex) == '=')
+                                lex_operator(lex, buf, LSHIFT_EQ);
                             break;
                     }
                 }
                 break;
             case '>':
-                buf->type = GREATER;
-                buf->len++;
-                advance_lex(lex);
+                lex_operator(lex, buf, GREATER);
                 if (match_lex(lex)) {
                     switch (current_lex(lex)) {
                         case '=':
-                            buf->type = GREATER_EQ;
-                            buf->len++;
-                            advance_lex(lex);
+                            lex_operator(lex, buf, GREATER_EQ);
                             break;
                         case '>':
-                            buf->type = RSHIFT;
-                            buf->len++;
-                            advance_lex(lex);
-                            if (match_lex(lex)) {
-                                switch (current_lex(lex)) {
-                                    case '=':
-                                        buf->type = RSHIFT_EQ;
-                                        buf->len++;
-                                        advance_lex(lex);
-                                        break;
-                                }
-                            }
+                            lex_operator(lex, buf, RSHIFT);
+                            if (match_lex(lex) && current_lex(lex) == '=')
+                                lex_operator(lex, buf, RSHIFT_EQ);
                             break;
                     }
                 }
                 break;
             case '&':
-                buf->type = AMPER;
-                buf->len++;
-                advance_lex(lex);
+                lex_operator(lex, buf, AMPER);
                 if (match_lex(lex)) {
                     switch (current_lex(lex)) {
                         case '=':
-                            buf->type = AMPER_EQ;
-                            buf->len++;
-                            advance_lex(lex);
+                            lex_operator(lex, buf, AMPER_EQ);
                             break;
                         case '&':
-                            buf->type = TWO_AMPER;
-                            buf->len++;
-                            advance_lex(lex);
+                            lex_operator(lex, buf, TWO_AMPER);
                             break;
                     }
                 }
                 break;
             case '|':
-                buf->type = PIPE;
-                buf->len++;
-                advance_lex(lex);
+                lex_operator(lex, buf, PIPE);
                 if (match_lex(lex)) {
                     switch (current_lex(lex)) {
                         case '=':
-                            buf->type = PIPE_EQ;
-                            buf->len++;
-                            advance_lex(lex);
+                            lex_operator(lex, buf, PIPE_EQ);
                             break;
                         case '|':
-                            buf->type = TWO_PIPE;
-                            buf->len++;
-                            advance_lex(lex);
+                            lex_operator(lex, buf, TWO_PIPE);
                             break;
                     }
                 }
                 break;
             case '!':
-                buf->type = EXCLAMATION;
-                buf->len++;
-                advance_lex(lex);
-                if (match_lex(lex)) {
-                    switch (current_lex(lex)) {
-                        case '=':
-                            buf->type = EXCLAMATION_EQ;
-                            buf->len++;
-                            advance_lex(lex);
-                            break;
-                    }
-                }
+                lex_operator(lex, buf, EXCLAMATION);
+                if (match_lex(lex) && current_lex(lex) == '=')
+                    lex_operator(lex, buf, EXCLAMATION_EQ);
                 break;
             case '%':
-                buf->type = PERCENT;
-                buf->len++;
-                advance_lex(lex);
-                if (match_lex(lex)) {
-                    switch (current_lex(lex)) {
-                        case '=':
-                            buf->type = PERCENT_EQ;
-                            buf->len++;
-                            advance_lex(lex);
-                            break;
-                    }
-                }
+                lex_operator(lex, buf, PERCENT);
+                if (match_lex(lex) && current_lex(lex) == '=')
+                    lex_operator(lex, buf, PERCENT_EQ);
                 break;
             case '.':
-                buf->type = DOT;
-                buf->len++;
-                advance_lex(lex);
-                if (match_lex(lex)) {
-                    switch (current_lex(lex)) {
-                        case '.':
-                            buf->type = TWO_DOT;
-                            buf->len++;
-                            advance_lex(lex);
-                            if (match_lex(lex)) {
-                                switch (current_lex(lex)) {
-                                    case '.':
-                                        buf->type = ELLIPSIS;
-                                        buf->len++;
-                                        advance_lex(lex);
-                                        break;
-                                }
-                            }
-                            break;
-                    }
+                lex_operator(lex, buf, DOT);
+                if (match_lex(lex) && current_lex(lex) == '.') {
+                    lex_operator(lex, buf, TWO_DOT);
+                    if (match_lex(lex) && current_lex(lex) == '.')
+                        lex_operator(lex, buf, ELLIPSIS);
                 }
                 break;
             case ',':
-                buf->type = COMMA;
-                buf->len++;
-                advance_lex(lex);
+                lex_operator(lex, buf, COMMA);
                 break;
             case ':':
-                buf->type = COLON;
-                buf->len++;
-                advance_lex(lex);
+                lex_operator(lex, buf, COLON);
                 break;
             case ';':
-                buf->type = SEMI;
-                buf->len++;
-                advance_lex(lex);
+                lex_operator(lex, buf, SEMI);
                 break;
             case '_':
-                buf->type = UNDERSCORE;
-                buf->len++;
-                advance_lex(lex);
+                lex_operator(lex, buf, UNDERSCORE);
                 break;
             case '?':
-                buf->type = QUEST;
-                buf->len++;
-                advance_lex(lex);
+                lex_operator(lex, buf, QUEST);
                 break;
             case '(':
-                buf->type = LPAR;
-                buf->len++;
-                advance_lex(lex);
+                lex_operator(lex, buf, LPAR);
                 break;
             case ')':
-                buf->type = RPAR;
-                buf->len++;
-                advance_lex(lex);
+                lex_operator(lex, buf, RPAR);
                 break;
             case '[':
-                buf->type = LSQB;
-                buf->len++;
-                advance_lex(lex);
+                lex_operator(lex, buf, LSQB);
                 break;
             case ']':
-                buf->type = RSQB;
-                buf->len++;
-                advance_lex(lex);
+                lex_operator(lex, buf, RSQB);
                 break;
             case '{':
-                buf->type = LBRACE;
-                buf->len++;
-                advance_lex(lex);
+                lex_operator(lex, buf, LBRACE);
                 break;
             case '}':
-                buf->type = RBRACE;
-                buf->len++;
-                advance_lex(lex);
+                lex_operator(lex, buf, RBRACE);
                 break;
             case '^':
-                buf->type = CARET;
-                buf->len++;
-                advance_lex(lex);
-                if (match_lex(lex)) {
-                    switch (current_lex(lex)) {
-                        case '=':
-                            buf->type = CARET_EQ;
-                            buf->len++;
-                            advance_lex(lex);
-                            break;
-                    }
-                }
+                lex_operator(lex, buf, CARET);
+                if (match_lex(lex) && current_lex(lex) == '=')
+                    lex_operator(lex, buf, CARET_EQ);
                 break;
             case '~':
-                buf->type = TILDE;
-                buf->len++;
-                advance_lex(lex);
+                lex_operator(lex, buf, TILDE);
                 break;
             case '@':
-                buf->type = AT;
-                buf->len++;
-                advance_lex(lex);
+                lex_operator(lex, buf, AT);
                 break;
-            case '#':
-                buf->type = HASH;
-                buf->len++;
-                advance_lex(lex);
+            case '#': 
+                lex_operator(lex, buf, HASH);
                 break;
             case ' ':
-                buf->type = SPACE;
-                buf->len++;
-                advance_lex(lex);
+                lex_operator(lex, buf, SPACE);
                 while (match_lex(lex) && current_lex(lex) == ' ') {
                     buf->len++;
                     advance_lex(lex);
