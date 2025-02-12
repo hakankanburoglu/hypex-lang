@@ -165,11 +165,9 @@ void consume_number(Token *tok, char c);
 
 Token *copy_token(const Token *tok);
 
-//bool token_compare(Token tok, int type, const char *value);
+//bool is_operator_token(Token *tok);
 
-//bool is_operator_token(Token tok);
-
-//bool is_number_token(Token tok);
+//bool is_number_token(Token *tok);
 
 void free_token(Token *tok);
 

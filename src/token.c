@@ -70,16 +70,12 @@ Token *copy_token(const Token *tok) {
     return r;
 }
 
-bool token_compare(Token tok, int type, const char *value) {
-    return tok.type == type && strcmp(tok.value, value) == 0;
+bool is_operator_token(Token *tok) {
+    return tok->type > 0 && tok->type < 51;
 }
 
-bool is_operator_token(Token tok) {
-    return tok.type > 0 && tok.type < 51;
-}
-
-bool is_number_token(Token tok) {
-    return tok.type == INTEGER || tok.type == FLOAT;
+bool is_number_token(Token *tok) {
+    return tok->type == INTEGER || tok->type == FLOAT;
 }
 
 void free_token(Token *tok) {
