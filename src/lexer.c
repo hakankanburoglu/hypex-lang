@@ -11,13 +11,10 @@
 #define KWLEN 41
 
 const char *KWLIST[KWLEN] = {
-    "if",
-    "for", "int", "try", "use", "var",
-    "base", "bool", "case", "char", "elif", "else", "enum", "func", "long", "null", "self", "true", "uint",
-    "async", "await", "break", "catch", "class", "const", "false", "float", "short", "throw", "ulong", "while", "yield",
-    "double", "object", "return", "string", "struct", "switch", "ushort",
-    "continue",
-    "interface"
+    "async", "await", "base", "bool", "break", "case", "catch", "char", "class", "const",
+    "continue", "double", "elif", "else", "enum", "false", "float", "for", "func", "if",
+    "int", "interface", "long", "null", "object", "return", "self", "short", "string", "struct",
+    "switch", "throw", "true", "try", "uint", "ulong", "use", "ushort", "var", "while", "yield"
 };
 
 Lexer *init_lexer(const char *input, const char *file) {
@@ -125,8 +122,12 @@ static int match_base(char c) {
     }
 }
 
+static inline int compare_keywords(const void *a, const void *b) {
+    return strcmp(*(const char **)a, *(const char **)b);
+}
+
 static inline int match_keyword(const char *s) {
-    const char **res = (const char **)bsearch(s, KWLIST, KWLEN, sizeof(KWLIST[0]), (int (*)(const void *, const void *))strcmp);
+    const char **res = (const char **)bsearch(&s, KWLIST, KWLEN, sizeof(KWLIST[0]), compare_keywords);
     return res ? (int)(res - KWLIST) : -1;
 }
 

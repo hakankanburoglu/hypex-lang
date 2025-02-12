@@ -81,47 +81,47 @@ void print_token_type(int type) {
 
 void print_keyword(int id) {
     switch (id) {
-        case KW_IF: printf("KW_IF"); break;
-        case KW_FOR: printf("KW_FOR"); break;
-        case KW_INT: printf("KW_INT"); break;
-        case KW_TRY: printf("KW_TRY"); break;
-        case KW_USE: printf("KW_USE"); break;
-        case KW_VAR: printf("KW_VAR"); break;
+        case KW_ASYNC: printf("KW_ASYNC"); break;
+        case KW_AWAIT: printf("KW_AWAIT"); break;
         case KW_BASE: printf("KW_BASE"); break;
         case KW_BOOL: printf("KW_BOOL"); break;
+        case KW_BREAK: printf("KW_BREAK"); break;
         case KW_CASE: printf("KW_CASE"); break;
+        case KW_CATCH: printf("KW_CATCH"); break;
         case KW_CHAR: printf("KW_CHAR"); break;
+        case KW_CLASS: printf("KW_CLASS"); break;
+        case KW_CONST: printf("KW_CONST"); break;
+        case KW_CONTINUE: printf("KW_CONTINUE"); break;
+        case KW_DOUBLE: printf("KW_DOUBLE"); break;
         case KW_ELIF: printf("KW_ELIF"); break;
         case KW_ELSE: printf("KW_ELSE"); break;
         case KW_ENUM: printf("KW_ENUM"); break;
-        case KW_FUNC: printf("KW_FUNC"); break;
-        case KW_LONG: printf("KW_LONG"); break;
-        case KW_NULL: printf("KW_NULL"); break;
-        case KW_SELF: printf("KW_SELF"); break;
-        case KW_TRUE: printf("KW_TRUE"); break;
-        case KW_UINT: printf("KW_UINT"); break;
-        case KW_ASYNC: printf("KW_ASYNC"); break;
-        case KW_AWAIT: printf("KW_AWAIT"); break;
-        case KW_BREAK: printf("KW_BREAK"); break;
-        case KW_CATCH: printf("KW_CATCH"); break;
-        case KW_CLASS: printf("KW_CLASS"); break;
-        case KW_CONST: printf("KW_CONST"); break;
         case KW_FALSE: printf("KW_FALSE"); break;
         case KW_FLOAT: printf("KW_FLOAT"); break;
-        case KW_SHORT: printf("KW_SHORT"); break;
-        case KW_THROW: printf("KW_THROW"); break;
-        case KW_ULONG: printf("KW_ULONG"); break;
-        case KW_WHILE: printf("KW_WHILE"); break;
-        case KW_YIELD: printf("KW_YIELD"); break;
-        case KW_DOUBLE: printf("KW_DOUBLE"); break;
+        case KW_FOR: printf("KW_FOR"); break;
+        case KW_FUNC: printf("KW_FUNC"); break;
+        case KW_IF: printf("KW_IF"); break;
+        case KW_INT: printf("KW_INT"); break;
+        case KW_INTERFACE: printf("KW_INTERFACE"); break;
+        case KW_LONG: printf("KW_LONG"); break;
+        case KW_NULL: printf("KW_NULL"); break;
         case KW_OBJECT: printf("KW_OBJECT"); break;
         case KW_RETURN: printf("KW_RETURN"); break;
+        case KW_SELF: printf("KW_SELF"); break;
+        case KW_SHORT: printf("KW_SHORT"); break;
         case KW_STRING: printf("KW_STRING"); break;
         case KW_STRUCT: printf("KW_STRUCT"); break;
         case KW_SWITCH: printf("KW_SWITCH"); break;
+        case KW_THROW: printf("KW_THROW"); break;
+        case KW_TRUE: printf("KW_TRUE"); break;
+        case KW_TRY: printf("KW_TRY"); break;
+        case KW_UINT: printf("KW_UINT"); break;
+        case KW_ULONG: printf("KW_ULONG"); break;
+        case KW_USE: printf("KW_USE"); break;
         case KW_USHORT: printf("KW_USHORT"); break;
-        case KW_CONTINUE: printf("KW_CONTINUE"); break;
-        case KW_INTERFACE: printf("KW_INTERFACE"); break;
+        case KW_VAR: printf("KW_VAR"); break;
+        case KW_WHILE: printf("KW_WHILE"); break;
+        case KW_YIELD: printf("KW_YIELD"); break;
         default: printf("KW?[%d]", id); break;
     }
 }
@@ -138,7 +138,7 @@ void print_base(int base) {
 
 void print_token(Token tok) {
     printf("%d:%d ", tok.pos.line, tok.pos.column);
-    (tok.type != KEYWORD) ? print_token_type(tok.type) : print_keyword(tok.type);
+    (tok.type != KEYWORD) ? print_token_type(tok.type) : print_keyword(tok.id);
     if (tok.value != NULL)
         printf(" `%s`", tok.value);
     if (tok.type == INTEGER || tok.type == FLOAT) {

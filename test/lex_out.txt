@@ -7,7 +7,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 1:1 COMMENT_BLOCK ` ` len:1
 3:4 EOL len:0
 4:1 EOL len:0
-5:1 IDENT `func` len:4
+5:1 KW_FUNC len:4
 5:5 SPACE len:1
 5:6 IDENT `main` len:4
 5:10 LPAR len:1
@@ -15,9 +15,9 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 5:12 COLON len:1
 5:13 EOL len:0
 6:1 SPACE len:4
-6:5 IDENT `var` len:3
+6:5 KW_VAR len:3
 6:8 COLON len:1
-6:9 IDENT `int` len:3
+6:9 KW_INT len:3
 6:12 SPACE len:1
 6:13 IDENT `a` len:1
 6:14 SPACE len:1
@@ -28,9 +28,9 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 6:19 COMMENT_LINE `this is a comment line` len:22
 6:43 EOL len:0
 7:1 SPACE len:4
-7:5 IDENT `var` len:3
+7:5 KW_VAR len:3
 7:8 COLON len:1
-7:9 IDENT `int` len:3
+7:9 KW_INT len:3
 7:12 SPACE len:1
 7:13 IDENT `b` len:1
 7:14 SPACE len:1
@@ -41,9 +41,9 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 7:45 INTEGER `2` num_value:`2` num_len:1 len:1
 7:46 EOL len:0
 8:1 SPACE len:4
-8:5 IDENT `var` len:3
+8:5 KW_VAR len:3
 8:8 COLON len:1
-8:9 IDENT `int` len:3
+8:9 KW_INT len:3
 8:12 SPACE len:1
 8:13 IDENT `c` len:1
 8:14 SPACE len:1
@@ -55,9 +55,9 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 8:40 EOL (comment) len:0
 8:19 COMMENT_BLOCK `    comment block` len:17
 9:20 SPACE len:1
-9:21 IDENT `var` len:3
+9:21 KW_VAR len:3
 9:24 COLON len:1
-9:25 IDENT `int` len:3
+9:25 KW_INT len:3
 9:28 SPACE len:1
 9:29 IDENT `d` len:1
 9:30 SPACE len:1
@@ -70,7 +70,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 11:5 COMMENT_LINE `numbers` len:7
 11:14 EOL len:0
 12:1 SPACE len:4
-12:5 IDENT `const` len:5
+12:5 KW_CONST len:5
 12:10 SPACE len:1
 12:11 IDENT `pi` len:2
 12:13 SPACE len:1
@@ -79,7 +79,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 12:16 FLOAT `3.14` num_value:`3.14` num_len:4 len:4
 12:20 EOL len:0
 13:1 SPACE len:4
-13:5 IDENT `var` len:3
+13:5 KW_VAR len:3
 13:8 SPACE len:1
 13:9 IDENT `dec` len:3
 13:12 SPACE len:1
@@ -88,7 +88,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 13:15 INTEGER `10` num_value:`10` num_len:2 len:2
 13:17 EOL len:0
 14:1 SPACE len:4
-14:5 IDENT `var` len:3
+14:5 KW_VAR len:3
 14:8 SPACE len:1
 14:9 IDENT `hex` len:3
 14:12 SPACE len:1
@@ -97,7 +97,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 14:15 INTEGER `0xa` BASE_HEX num_value:`0xa` num_len:3 len:3
 14:18 EOL len:0
 15:1 SPACE len:4
-15:5 IDENT `var` len:3
+15:5 KW_VAR len:3
 15:8 SPACE len:1
 15:9 IDENT `oct` len:3
 15:12 SPACE len:1
@@ -106,7 +106,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 15:15 INTEGER `0o12` BASE_OCT num_value:`0o12` num_len:4 len:4
 15:19 EOL len:0
 16:1 SPACE len:4
-16:5 IDENT `var` len:3
+16:5 KW_VAR len:3
 16:8 SPACE len:1
 16:9 IDENT `bin` len:3
 16:12 SPACE len:1
@@ -115,7 +115,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 16:15 INTEGER `0b1010` BASE_BIN num_value:`0b1010` num_len:6 len:6
 16:21 EOL len:0
 17:1 SPACE len:4
-17:5 IDENT `var` len:3
+17:5 KW_VAR len:3
 17:8 SPACE len:1
 17:9 IDENT `e` len:1
 17:10 SPACE len:1
@@ -124,7 +124,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 17:13 FLOAT `1.2e3` exponent num_value:`1.2e3` num_len:5 len:5
 17:18 EOL len:0
 18:1 SPACE len:4
-18:5 IDENT `var` len:3
+18:5 KW_VAR len:3
 18:8 SPACE len:1
 18:9 IDENT `p` len:1
 18:10 SPACE len:1
@@ -133,7 +133,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 18:13 INTEGER `0x1fp2` BASE_HEX exponent num_value:`0x1fp2` num_len:6 len:6
 18:19 EOL len:0
 19:1 SPACE len:4
-19:5 IDENT `var` len:3
+19:5 KW_VAR len:3
 19:8 SPACE len:1
 19:9 IDENT `e2` len:2
 19:11 SPACE len:1
@@ -142,7 +142,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 19:14 FLOAT `1.2e-3` negative_exponent num_value:`1.2e-3` num_len:6 len:6
 19:20 EOL len:0
 20:1 SPACE len:4
-20:5 IDENT `var` len:3
+20:5 KW_VAR len:3
 20:8 SPACE len:1
 20:9 IDENT `p2` len:2
 20:11 SPACE len:1
@@ -151,7 +151,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 20:14 INTEGER `0x1fp-2` BASE_HEX negative_exponent num_value:`0x1fp-2` num_len:7 len:7
 20:21 EOL len:0
 21:1 SPACE len:4
-21:5 IDENT `var` len:3
+21:5 KW_VAR len:3
 21:8 SPACE len:1
 21:9 IDENT `sep` len:3
 21:12 SPACE len:1
@@ -161,7 +161,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 21:24 EOL len:0
 22:1 EOL len:0
 23:1 SPACE len:4
-23:5 IDENT `var` len:3
+23:5 KW_VAR len:3
 23:8 SPACE len:1
 23:9 IDENT `s` len:1
 23:10 SPACE len:1
@@ -172,7 +172,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 23:27 COMMENT_LINE `string variable` len:15
 23:44 EOL len:0
 24:1 SPACE len:4
-24:5 IDENT `var` len:3
+24:5 KW_VAR len:3
 24:8 SPACE len:1
 24:9 IDENT `q` len:1
 24:10 SPACE len:1
@@ -183,7 +183,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 24:65 COMMENT_LINE `string escape` len:13
 24:80 EOL len:0
 25:1 SPACE len:4
-25:5 IDENT `var` len:3
+25:5 KW_VAR len:3
 25:8 SPACE len:1
 25:9 IDENT `f` len:1
 25:10 SPACE len:1
@@ -209,7 +209,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 25:49 COMMENT_LINE `format string` len:13
 25:64 EOL len:0
 26:1 SPACE len:4
-26:5 IDENT `var` len:3
+26:5 KW_VAR len:3
 26:8 SPACE len:1
 26:9 IDENT `r` len:1
 26:10 SPACE len:1
@@ -221,7 +221,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 26:56 EOL len:0
 27:1 EOL len:0
 28:1 SPACE len:4
-28:5 IDENT `var` len:3
+28:5 KW_VAR len:3
 28:8 SPACE len:1
 28:9 IDENT `c1` len:2
 28:11 SPACE len:1
@@ -232,7 +232,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 28:18 COMMENT_LINE `char variable` len:13
 28:33 EOL len:0
 29:1 SPACE len:4
-29:5 IDENT `var` len:3
+29:5 KW_VAR len:3
 29:8 SPACE len:1
 29:9 IDENT `c2` len:2
 29:11 SPACE len:1
@@ -247,7 +247,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 31:5 COMMENT_LINE `indentation test` len:16
 31:23 EOL len:0
 32:1 SPACE len:4
-32:5 IDENT `for` len:3
+32:5 KW_FOR len:3
 32:8 SPACE len:1
 32:9 IDENT `i` len:1
 32:10 SPACE len:1
@@ -263,7 +263,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 32:25 COLON len:1
 32:26 EOL len:0
 33:1 SPACE len:8
-33:9 IDENT `for` len:3
+33:9 KW_FOR len:3
 33:12 SPACE len:1
 33:13 IDENT `j` len:1
 33:14 SPACE len:1
@@ -299,7 +299,7 @@ lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr
 35:21 FSTRING_END len:0
 35:22 EOL len:0
 36:1 SPACE len:4
-36:5 IDENT `for` len:3
+36:5 KW_FOR len:3
 36:8 SPACE len:1
 36:9 IDENT `k` len:1
 36:10 SPACE len:1
