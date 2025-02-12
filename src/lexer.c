@@ -115,10 +115,14 @@ static inline bool is_eol(Lexer *lex) {
 
 static int match_base(char c) {
     switch (c) {
-        case 'x': return BASE_HEX;
-        case 'o': return BASE_OCT;
-        case 'b': return BASE_BIN;
-        default: return BASE_DEC;
+        case 'x': case 'X':
+            return BASE_HEX;
+        case 'o': case 'O':
+            return BASE_OCT;
+        case 'b': case 'B': 
+            return BASE_BIN;
+        default:
+            return BASE_DEC;
     }
 }
 
