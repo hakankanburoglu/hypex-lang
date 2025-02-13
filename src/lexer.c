@@ -532,6 +532,10 @@ void tokenize(Lexer *lex) {
                 break;
             case '_':
                 lex_operator(lex, buf, UNDERSCORE);
+                if (match_lex(lex) && is_ident_body(lex)) {
+                    consume_token(buf, '_');
+                    lex_ident(lex, buf);
+                }
                 break;
             case '?':
                 lex_operator(lex, buf, QUEST);
