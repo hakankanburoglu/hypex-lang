@@ -42,7 +42,6 @@ Lexer *init_lexer(const char *input, const char *file) {
     lex->offset = 0;
     lex->pos = (Pos){1, 1};
     lex->newline = false;
-    lex->comment_eol = false;
     lex->potential_fstring = false;
     lex->potential_rstring = false;
     lex->fstring_body = false;

@@ -15,7 +15,6 @@ typedef struct {
     int offset;
     Pos pos;
     bool newline;
-    bool comment_eol;
     bool potential_fstring;
     bool potential_rstring;
     bool fstring_body;
