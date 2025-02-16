@@ -231,6 +231,7 @@ static void lex_ident(Lexer *lex, Token *buf) {
     const int id = match_keyword(buf->value);
     if (id != -1) {
         buf->type = KEYWORD;
+        free(buf->value);
         buf->value = NULL;
         buf->id = id;
     } else {
