@@ -1,4 +1,4 @@
-lex:lex.txt:37:22 offset:323 len:917 newln:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr:0
+lex:lex.txt:37:22 offset:323 len:917 newln:0 cmt_eol:0 pot_fs:0 pot_rs:0 fs_body:0 fs_expr:0
 
 1:1 COMMENT_BLOCK len:1
 1:3 EOL (comment) len:0
