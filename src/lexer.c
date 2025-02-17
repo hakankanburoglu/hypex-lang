@@ -572,6 +572,9 @@ void tokenize(Lexer *lex) {
             case '#': 
                 lex_operator(lex, buf, HASH);
                 break;
+            case '\\':
+                lex_operator(lex, buf, ESCAPE);
+                break;
             case ' ':
                 lex_operator(lex, buf, SPACE);
                 while (match_lex(lex) && current_lex(lex) == ' ') {
