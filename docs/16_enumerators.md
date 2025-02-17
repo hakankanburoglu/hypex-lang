@@ -14,12 +14,12 @@ enum Number:
     THREE
 
 func main():
-    var:Number num = Number.ONE
-    >> num.value // 1
-    num = Number[1]
-    >> num.value // 2
-    num++
-    >> num.value // 3
+    var:Number n = Number.ONE
+    >> n.value + "\n" // 1
+    n = Number[1]
+    >> n.value + "\n" // 2
+    n++
+    >> n.value + "\n" // 3
 
 ```
 

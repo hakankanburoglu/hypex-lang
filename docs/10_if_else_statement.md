@@ -30,6 +30,15 @@ func main():
 The Else-If block functions as a combination of Else and If blocks. The Else-If block is defined with the `elif` keyword. Else-If block cannot be defined with `else` and `if` keywords.
 
 ```
+if condition:
+    expressions
+elif condition:
+    expressions
+else:
+    expressions
+```
+
+```
 func main():
     var:int n
     >> "Enter a number: "

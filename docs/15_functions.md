@@ -8,7 +8,7 @@ func main():
     var:int n
     >> "Enter number = "
     << n
-    >> "Square = " + square(n)
+    >> "Square: " + square(n)
 ```
 
 [Index](index.md) | [<< Back](14_arrays.md) | [Next >>](16_enumerators.md)

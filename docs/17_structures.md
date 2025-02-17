@@ -4,8 +4,8 @@
 struct Point:
     var:int x, y
 
-func:string pointToString(Point point):
-    return "(" + point.x + ", " + point.y + ")"
+func:string pointToString(Point p):
+    return "(" + p.x + ", " + p.y + ")"
 
 func main():
     var point = Point(1, 1)
@@ -17,13 +17,11 @@ func main():
 struct Point:
     var:int x, y
 
-func:string pointToString(Point point):
-    return "(" + point.x + ", " + point.y + ")"
+func:string pointToString(Point p):
+    return "(" + p.x + ", " + p.y + ")"
 
-func:Point euclidean(Point p1, Point p2):
-    var:Point point = Point(0, 0)
-    sqrt(pow(p1.x - p2.x, 2) + pow(p1.y - p2.y, 2))
-    return point
+func:float euclidean(Point p1, Point p2):
+    return sqrt(pow(p1.x - p2.x, 2) + pow(p1.y - p2.y, 2))
 
 func main():
     var:Point p1 = {x=2, y=4}
