@@ -139,8 +139,7 @@ void print_base(int base) {
 void print_token(Token tok) {
     printf("%d:%d ", tok.pos.line, tok.pos.column);
     (tok.type != KEYWORD) ? print_token_type(tok.type) : print_keyword(tok.id);
-    if (tok.value != NULL)
-        printf(" `%s`", tok.value);
+    if (tok.value != NULL) printf(" `%s`", tok.value);
     if (tok.type == INTEGER || tok.type == FLOAT) {
         if (tok.base != 0) {
             printf(" ");
@@ -152,8 +151,8 @@ void print_token(Token tok) {
         }
         printf(" num_value:`%s` num_len:%d", tok.num_value, tok.num_len);
     }
-    if (tok.type == EOL && tok.is_comment)
-        printf(" (comment)");
+    if (tok.type == EOL && tok.is_comment) printf(" (comment)");
+    if (tok.type == _INDENT || tok.type == _DEDENT) printf(" level:%d", tok.level);
     printf(" len:%d\n", tok.len);
 }
 

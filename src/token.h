@@ -150,6 +150,8 @@ typedef struct {
             bool is_exponent;
             bool is_negative;
         };
+        //_INDENT, _DEDENT
+        int level;
         //EOL
         bool is_comment;
     };
