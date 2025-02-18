@@ -37,6 +37,11 @@ Lexer *init_lexer(const char *input, const char *file) {
     } else {
         lex->file = NULL;
     }
+    lex->indent_stack = (int *)malloc(sizeof(int));
+    lex->stack_len = 1;
+    lex->stack_capacity = 1;
+    lex->indent_stack[0] = 0;
+    lex->indent = 0;
     lex->tok_list = NULL;
     lex->len = 0;
     lex->offset = 0;
@@ -61,6 +66,30 @@ void consume_lex(Lexer *lex, Token *tok) {
         lex->len++;
         lex->tok_list[lex->len - 1] = tok;   
     }
+}
+
+static inline void push_indent(Lexer *lex, int indent) {
+    if (lex->stack_len == lex->stack_capacity) {
+        lex->stack_capacity *= 2;
+        lex->indent_stack = (int *)realloc(lex->indent_stack, lex->stack_capacity * sizeof(int));
+        if (lex->indent_stack == NULL) error_hypex();
+    }
+    lex->indent_stack[lex->stack_len++] = indent;
+}
+
+static inline void pop_indent(Lexer *lex) {
+    if (lex->stack_len == 0) error_hypex();
+    lex->indent_stack[--(lex->stack_len)];
+}
+
+static inline int peek_indent(const Lexer *lex) {
+    if (lex->stack_len == 0) error_hypex();
+    return lex->indent_stack[lex->stack_len - 1];
+}
+
+static inline void clear_indent(Lexer *lex) {
+    lex->stack_len = 1;
+    lex->stack_capacity = 1;
 }
 
 static inline bool match_lex(const Lexer *lex) {
