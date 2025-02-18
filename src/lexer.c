@@ -79,7 +79,7 @@ static inline void push_indent(Lexer *lex, int indent) {
 
 static inline void pop_indent(Lexer *lex) {
     if (lex->stack_len == 0) error_hypex();
-    lex->indent_stack[--(lex->stack_len)];
+    --(lex->stack_len);
 }
 
 static inline int peek_indent(const Lexer *lex) {
