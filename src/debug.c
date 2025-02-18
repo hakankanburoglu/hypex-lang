@@ -157,7 +157,7 @@ void print_token(Token tok) {
 }
 
 void print_lexer(Lexer lex) {
-    printf("lex:%s:%d:%d offset:%d len:%d newln:%d pot_fs:%d pot_rs:%d fs_body:%d fs_expr:%d\n\n", lex.file, lex.pos.line, lex.pos.column, lex.len, lex.offset, lex.newline, lex.potential_fstring, lex.potential_rstring, lex.fstring_body, lex.fstring_expr);
+    printf("lex:%s:%d:%d offset:%d len:%d stk_len:%d stk_cap:%d ind:%d newln:%d pot_fs:%d pot_rs:%d fs_body:%d fs_expr:%d\n\n", lex.file, lex.pos.line, lex.pos.column, lex.len, lex.stack_len, lex.stack_capacity, lex.indent, lex.offset, lex.newline, lex.potential_fstring, lex.potential_rstring, lex.fstring_body, lex.fstring_expr);
     for (int i = 0; i < lex.len; i++)
         print_token(*(lex.tok_list[i]));
 }
