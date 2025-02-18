@@ -92,6 +92,10 @@ static inline void clear_indent(Lexer *lex) {
     lex->stack_capacity = 1;
 }
 
+static inline bool empty_indent(const Lexer *lex) {
+    return lex->stack_len == 1;
+}
+
 static inline Token *last_token(const Lexer *lex) {
     return lex->tok_list[lex->len - 1];
 }
