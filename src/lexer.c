@@ -92,6 +92,10 @@ static inline void clear_indent(Lexer *lex) {
     lex->stack_capacity = 1;
 }
 
+static inline Token *last_token(const Lexer *lex) {
+    return lex->tok_list[lex->len - 1];
+}
+
 static inline bool match_lex(const Lexer *lex) {
     return lex->offset < lex->inputlen;
 }
@@ -374,6 +378,34 @@ static void lex_rstring(Lexer *lex) {
     advance_lex(lex);
 }
 
+static void lex_indent(Lexer *lex, Token *buf) {
+    int indent = buf->len - lex->indent;
+    buf->type = _INDENT;
+    if (indent == 0) {
+        buf->level++;
+        return;
+    }
+    if (indent > 0) {
+        buf->level = 1;
+        push_indent(lex, indent);
+        lex->indent += indent;
+        return;
+    }
+    if (indent < 0) {
+        buf->type = _DEDENT;
+        int tmp = buf->len;
+        for (int i = lex->stack_len - 1; i >= 0; i--) {
+            if (tmp == 0) break;
+            if (tmp < lex->indent_stack[i]) error_hypex();
+            tmp -= lex->indent_stack[i];
+            pop_indent(lex);
+            buf->level++;
+            lex->indent--;
+        }
+        return;
+    }
+}
+
 static void lex_eol(Lexer *lex, Token *buf) {
     buf->type = EOL;
     buf->is_comment = false;
@@ -610,6 +642,8 @@ void tokenize(Lexer *lex) {
                     buf->len++;
                     advance_lex(lex);
                 }
+                if (last_token(lex)->type == EOL)
+                    lex_indent(lex, buf);
                 break;
             case '\'':
                 buf->type = CHAR;
@@ -640,5 +674,6 @@ void free_lex(Lexer *lex) {
     for (int i = 0; i < lex->len; i++)
         free_token(lex->tok_list[i]);
     free(lex->tok_list);
+    free(lex->indent_stack);
     free(lex);
 }
