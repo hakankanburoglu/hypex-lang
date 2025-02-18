@@ -421,6 +421,12 @@ void tokenize(Lexer *lex) {
             lex->newline = false;
             lex->pos.line++;
             lex->pos.column = 1;
+            if (current_lex(lex) != ' ' && !empty_indent(lex)) {
+                consume_lex(lex, make_token(_DEDENT, lex->pos));
+                lex->tok_list[lex->len - 1]->level = -1;
+                clear_indent(lex);
+                advance_lex(lex);
+            }
         }
 
         if (lex->potential_fstring) {
