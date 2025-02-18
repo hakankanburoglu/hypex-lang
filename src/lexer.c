@@ -397,11 +397,11 @@ static void lex_indent(Lexer *lex, Token *buf) {
     }
     if (indent < 0) {
         buf->type = _DEDENT;
-        int tmp = buf->len;
+        size_t buflen = buf->len;
         for (int i = lex->stack_len - 1; i >= 0; i--) {
-            if (tmp == 0) break;
-            if (tmp < lex->indent_stack[i]) error_hypex();
-            tmp -= lex->indent_stack[i];
+            if (buflen == 0) break;
+            if (buflen < lex->indent_stack[i]) error_indent(lex->file, lex->pos.line, lex->pos.column);
+            buflen -= lex->indent_stack[i];
             pop_indent(lex);
             buf->level++;
             lex->indent--;
@@ -410,7 +410,7 @@ static void lex_indent(Lexer *lex, Token *buf) {
     }
 }
 
-static void lex_eol(Lexer *lex, Token *buf) {
+static inline void lex_eol(Lexer *lex, Token *buf) {
     buf->type = EOL;
     buf->is_comment = false;
     lex->newline = true;
