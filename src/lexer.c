@@ -417,6 +417,11 @@ static inline void lex_eol(Lexer *lex, Token *buf) {
     advance_lex(lex);
 }
 
+static inline void lex_invalid(Lexer *lex) {
+    error_char(lex->file, lex->pos.line, lex->pos.column, current_lex(lex));
+    advance_lex(lex);
+}
+
 void tokenize(Lexer *lex) {
 
     while (match_lex(lex)) {
@@ -671,7 +676,7 @@ void tokenize(Lexer *lex) {
                 else if (is_letter(lex))
                     lex_ident(lex, buf);
                 else
-                    error_char(lex->file, lex->pos.line, lex->pos.column, current_lex(lex));
+                    lex_invalid(lex);
                 break;
         }
         consume_lex(lex, buf);
