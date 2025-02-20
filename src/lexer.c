@@ -38,6 +38,7 @@ Lexer *init_lexer(const char *input, const char *file) {
         lex->file = NULL;
     }
     lex->indent_stack = (int *)malloc(sizeof(int));
+    if (!lex->indent_stack) error_hypex();
     lex->stack_len = 1;
     lex->stack_capacity = 1;
     lex->indent_stack[0] = 0;
