@@ -8,7 +8,7 @@
 
 void lex_file(Lexer *lex) {
     FILE *file = fopen(lex->file, "r");
-    if (file == NULL) error_file(lex->file);
+    if (!file) error_file(lex->file);
     fseek(file, 0, SEEK_END);
     size_t filelen = ftell(file);
     if (filelen == -1L) {
@@ -17,7 +17,7 @@ void lex_file(Lexer *lex) {
     }
     rewind(file);
     lex->input = (char *)realloc(lex->input, sizeof(char) * (filelen + 1));
-    if (lex->input == NULL) {
+    if (!lex->input) {
         fclose(file);
         error_hypex();
     }

@@ -19,20 +19,20 @@ const char *KWLIST[KWLEN] = {
 
 Lexer *init_lexer(const char *input, const char *file) {
     Lexer *lex = (Lexer *)malloc(sizeof(Lexer));
-    if (lex == NULL) error_hypex();
-    if (input != NULL) {
+    if (!lex) error_hypex();
+    if (input) {
         const size_t inputlen = strlen(input);
         lex->input = (char *)malloc(sizeof(char) * inputlen);
-        if (lex->input == NULL) error_hypex();
+        if (!lex->input) error_hypex();
         strcpy(lex->input, input);
         lex->inputlen = inputlen;
     } else {
         lex->input = NULL;
         lex->inputlen = 0;
     }
-    if (file != NULL) {
+    if (file) {
         lex->file = (char *)malloc(sizeof(char) * (strlen(file) + 1));
-        if (lex->file == NULL) error_hypex();
+        if (!lex->file) error_hypex();
         strcpy(lex->file, file);
     } else {
         lex->file = NULL;
@@ -55,14 +55,14 @@ Lexer *init_lexer(const char *input, const char *file) {
 }
 
 void consume_lex(Lexer *lex, Token *tok) {
-    if (lex->tok_list == NULL) {
+    if (!lex->tok_list) {
         lex->tok_list = (Token **)realloc(lex->tok_list, sizeof(Token));
-        if (lex->tok_list == NULL) error_hypex();
+        if (!lex->tok_list) error_hypex();
         lex->len = 1;
         lex->tok_list[0] = tok;
     } else {
         lex->tok_list = (Token **)realloc(lex->tok_list, sizeof(Token) * (lex->len + 1));
-        if (lex->tok_list == NULL) error_hypex();
+        if (!lex->tok_list) error_hypex();
         lex->len++;
         lex->tok_list[lex->len - 1] = tok;   
     }
@@ -72,7 +72,7 @@ static inline void push_indent(Lexer *lex, int indent) {
     if (lex->stack_len == lex->stack_capacity) {
         lex->stack_capacity *= 2;
         lex->indent_stack = (int *)realloc(lex->indent_stack, lex->stack_capacity * sizeof(int));
-        if (lex->indent_stack == NULL) error_hypex();
+        if (!lex->indent_stack) error_hypex();
     }
     lex->indent_stack[lex->stack_len++] = indent;
 }

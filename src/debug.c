@@ -145,7 +145,7 @@ void print_base(int base) {
 void print_token(Token tok) {
     printf("%d:%d ", tok.pos.line, tok.pos.column);
     (tok.type != KEYWORD) ? print_token_type(tok.type) : print_keyword(tok.id);
-    if (tok.value != NULL) printf(" `%s`", tok.value);
+    if (tok.value) printf(" `%s`", tok.value);
     if (tok.type == INTEGER || tok.type == FLOAT) {
         if (tok.base != 0) {
             printf(" ");

@@ -17,7 +17,7 @@ static inline void fatal_error(const char *format, ...) {
 static inline void print_error(const char *file, int line, int column, const char *format, ...) {
     va_list args;
     va_start(args, format);
-    if (file != NULL) fprintf(stderr, "%s:", file);
+    if (file) fprintf(stderr, "%s:", file);
     fprintf(stderr, "%d:%d error: ", line, column);
     vfprintf(stderr, format, args);
     va_end(args);

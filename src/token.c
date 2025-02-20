@@ -8,7 +8,7 @@
 
 Token *make_token(int type, Pos pos) {
     Token *tok = (Token *)malloc(sizeof(Token));
-    if (tok == NULL) error_hypex();
+    if (!tok) error_hypex();
     tok->type = type;
     tok->value = NULL;
     tok->len = 0;
@@ -25,16 +25,16 @@ void init_number(Token *tok) {
 }
 
 static void consume_value(char **value, size_t *len, char c) {
-    if (*value == NULL) {
+    if (!*value) {
         *value = (char *)malloc(sizeof(char) * 2);
-        if (value == NULL) error_hypex();
+        if (!value) error_hypex();
         (*value)[0] = c;
         (*value)[1] = '\0';
         *len = 1;
     } else {
         (*value)[(*len)++] = c;
         *value = (char *)realloc(*value, sizeof(char) * (*len + 1));
-        if (value == NULL) error_hypex();
+        if (!value) error_hypex();
         (*value)[*len] = '\0';
     }
 }
@@ -50,9 +50,9 @@ void consume_number(Token *tok, char c) {
 
 Token *copy_token(const Token *tok) {
     Token *r = make_token(tok->type, tok->pos);
-    if (tok->value != NULL) {
+    if (tok->value) {
         r->value = (char *)malloc(sizeof(char) * (tok->len + 1));
-        if (r->value == NULL) error_hypex();
+        if (!r->value) error_hypex();
         strcpy(r->value, tok->value);
     }
     r->len = tok->len;
@@ -62,7 +62,7 @@ Token *copy_token(const Token *tok) {
     if (r->type == INTEGER) {
         r->base = tok->base;
         r->num_value = (char *)malloc(sizeof(char) * (tok->num_len + 1));
-        if (r->num_value == NULL) error_hypex();
+        if (!r->num_value) error_hypex();
         strcpy(r->num_value, tok->num_value);
         r->is_exponent = tok->is_exponent;
         r->is_negative = tok->is_negative;
