@@ -16,6 +16,7 @@ Parser *init_parser(Lexer *lex) {
     return p;
 }
 
+// only for SOURCE_NODE
 static inline void consume_parse(Parser *p, Node *node) {
     if (!p->expr->data.source.body) {
         p->expr->data.source.body = (Node **)realloc(p->expr->data.source.body, sizeof(Node));
@@ -51,7 +52,7 @@ static inline Token *current(const Parser *p) {
 // overflow warning: list length is not checked in this function
 static inline void advance(Parser *p) {
     p->offset++;
-    while (is_ignore_token(current(p)->kind)) p->offset++;
+    while (match(p) && is_ignore_token(current(p)->kind)) p->offset++;
 }
 
 static inline bool is_unary_op(int kind) {
