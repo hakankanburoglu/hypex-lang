@@ -93,6 +93,8 @@ typedef struct Node {
 
 Node *make_node(int kind, Node *parent);
 
+Node *copy_node(Node *node);
+
 void free_node(Node *node);
 
 #endif //NODE_H
