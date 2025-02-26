@@ -63,8 +63,8 @@ static inline bool is_binary_op(int kind) {
     return (kind >= 1 && kind <= 9) || kind == 11 || (kind >= 29 && kind <= 44) || kind == 48 || kind == 49;
 }
 
-static inline bool is_literal(int type) {
-    switch (type) {
+static inline bool is_literal(int kind) {
+    switch (kind) {
         case T_INTEGER: case T_FLOAT: case T_CHAR: case T_STRING: case T_RSTRING:
             return true;
         default:
