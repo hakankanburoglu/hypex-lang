@@ -5,7 +5,6 @@
 #include <stdbool.h>
 
 enum {
-    UNKNOWN,
     T_UNKNOWN,
     // SINGLE
     T_EQUAL, // =
@@ -167,10 +166,6 @@ void consume_token(Token *tok, char c);
 void consume_number(Token *tok, char c);
 
 Token *copy_token(const Token *tok);
-
-//bool is_operator_token(Token *tok);
-
-//bool is_number_token(Token *tok);
 
 void free_token(Token *tok);
 
