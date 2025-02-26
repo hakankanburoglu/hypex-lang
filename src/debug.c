@@ -8,80 +8,80 @@
 
 static inline const char *file_name(const char *file) {
     const char *res = strrchr(file, '/'); //for Unix
-    if (!res) res = strrchr(file, '\\'); //for Windows
+    if (!res) res = strrchr(file, '\\'); //for Non-Unix
     return res ? res + 1 : file;
 }
 
 void print_token_kind(int kind) {
     switch (kind) {
-        case T_UNKNOWN: printf("UNKNOWN"); break;
-        case T_EQUAL: printf("EQUAL"); break;
-        case T_PLUS: printf("PLUS"); break;
-        case T_MINUS: printf("MINUS"); break;
-        case T_STAR: printf("STAR"); break;
-        case T_SLASH: printf("SLASH"); break;
-        case T_LESS: printf("LESS"); break;
-        case T_GREATER: printf("GREATER"); break;
-        case T_AMPER: printf("AMPER"); break;
-        case T_PIPE: printf("PIPE"); break;
-        case T_EXCLAMATION: printf("EXCLAMATION"); break;
-        case T_PERCENT: printf("PERCENT"); break;
-        case T_DOT: printf("DOT"); break;
-        case T_COMMA: printf("COMMA"); break;
-        case T_COLON: printf("COLON"); break;
-        case T_SEMI: printf("SEMI"); break;
-        case T_UNDERSCORE: printf("UNDERSCORE"); break;
-        case T_QUEST: printf("QUEST"); break;
-        case T_LPAR: printf("LPAR"); break;
-        case T_RPAR: printf("RPAR"); break;
-        case T_LSQB: printf("LSQB"); break;
-        case T_RSQB: printf("RSQB"); break;
-        case T_LBRACE: printf("LBRACE"); break;
-        case T_RBRACE: printf("RBRACE"); break;
-        case T_CARET: printf("CARET"); break;
-        case T_TILDE: printf("TILDE"); break;
-        case T_AT: printf("AT"); break;
-        case T_HASH: printf("HASH"); break;
-        case T_ESCAPE: printf("ESCAPE"); break;
-        case T_TWO_EQ: printf("TWO_EQ"); break;
-        case T_PLUS_EQ: printf("PLUS_EQ"); break;
-        case T_MINUS_EQ: printf("MINUS_EQ"); break;
-        case T_STAR_EQ: printf("STAR_EQ"); break;
-        case T_SLASH_EQ: printf("SLASH_EQ"); break;
-        case T_LESS_EQ: printf("LESS_EQ"); break;
-        case T_GREATER_EQ: printf("GREATER_EQ"); break;
-        case T_AMPER_EQ: printf("AMPER_EQ"); break;
-        case T_TWO_AMPER: printf("TWO_AMPER"); break;
-        case T_PIPE_EQ: printf("PIPE_EQ"); break;
-        case T_TWO_PIPE: printf("TWO_PIPE"); break;
-        case T_EXCLAMATION_EQ: printf("EXCLAMATION_EQ"); break;
-        case T_PERCENT_EQ: printf("PERCENT_EQ"); break;
-        case T_CARET_EQ: printf("CARET_EQ"); break;
-        case T_LSHIFT: printf("LSHIFT"); break;
-        case T_RSHIFT: printf("RSHIFT"); break;
-        case T_INCREASE: printf("INCREASE"); break;
-        case T_DECREASE: printf("DECREASE"); break;
-        case T_TWO_DOT: printf("TWO_DOT"); break;
-        case T_LSHIFT_EQ: printf("LSHIFT_EQ"); break;
-        case T_RSHIFT_EQ: printf("RSHIFT_EQ"); break;
-        case T_ELLIPSIS: printf("ELLIPSIS"); break;
-        case T_INTEGER: printf("INTEGER"); break;
-        case T_FLOAT: printf("FLOAT"); break;
-        case T_IDENT: printf("IDENT"); break;
-        case T_KEYWORD: printf("KEYWORD"); break;
-        case T_COMMENT_LINE: printf("COMMENT_LINE"); break;
-        case T_COMMENT_BLOCK: printf("COMMENT_BLOCK"); break;
-        case T_CHAR: printf("CHAR"); break;
-        case T_STRING: printf("STRING"); break;
-        case T_FSTRING_START: printf("FSTRING_START"); break;
-        case T_FSTRING_BODY: printf("FSTRING_BODY"); break;
-        case T_FSTRING_END: printf("FSTRING_END"); break;
-        case T_RSTRING: printf("RSTRING"); break;
-        case T_SPACE: printf("SPACE"); break;
-        case T_INDENT: printf("_INDENT"); break;
-        case T_DEDENT: printf("_DEDENT"); break;
-        case T_EOL: printf("EOL"); break;
-        default: printf("T_%d", kind); break;
+        case T_UNKNOWN: printf("T_UNKNOWN"); break;
+        case T_EQUAL: printf("T_EQUAL"); break;
+        case T_PLUS: printf("T_PLUS"); break;
+        case T_MINUS: printf("T_MINUS"); break;
+        case T_STAR: printf("T_STAR"); break;
+        case T_SLASH: printf("T_SLASH"); break;
+        case T_LESS: printf("T_LESS"); break;
+        case T_GREATER: printf("T_GREATER"); break;
+        case T_AMPER: printf("T_AMPER"); break;
+        case T_PIPE: printf("T_PIPE"); break;
+        case T_EXCLAMATION: printf("T_EXCLAMATION"); break;
+        case T_PERCENT: printf("T_PERCENT"); break;
+        case T_DOT: printf("T_DOT"); break;
+        case T_COMMA: printf("T_COMMA"); break;
+        case T_COLON: printf("T_COLON"); break;
+        case T_SEMI: printf("T_SEMI"); break;
+        case T_UNDERSCORE: printf("T_UNDERSCORE"); break;
+        case T_QUEST: printf("T_QUEST"); break;
+        case T_LPAR: printf("T_LPAR"); break;
+        case T_RPAR: printf("T_RPAR"); break;
+        case T_LSQB: printf("T_LSQB"); break;
+        case T_RSQB: printf("T_RSQB"); break;
+        case T_LBRACE: printf("T_LBRACE"); break;
+        case T_RBRACE: printf("T_RBRACE"); break;
+        case T_CARET: printf("T_CARET"); break;
+        case T_TILDE: printf("T_TILDE"); break;
+        case T_AT: printf("T_AT"); break;
+        case T_HASH: printf("T_HASH"); break;
+        case T_ESCAPE: printf("T_ESCAPE"); break;
+        case T_TWO_EQ: printf("T_TWO_EQ"); break;
+        case T_PLUS_EQ: printf("T_PLUS_EQ"); break;
+        case T_MINUS_EQ: printf("T_MINUS_EQ"); break;
+        case T_STAR_EQ: printf("T_STAR_EQ"); break;
+        case T_SLASH_EQ: printf("T_SLASH_EQ"); break;
+        case T_LESS_EQ: printf("T_LESS_EQ"); break;
+        case T_GREATER_EQ: printf("T_GREATER_EQ"); break;
+        case T_AMPER_EQ: printf("T_AMPER_EQ"); break;
+        case T_TWO_AMPER: printf("T_TWO_AMPER"); break;
+        case T_PIPE_EQ: printf("T_PIPE_EQ"); break;
+        case T_TWO_PIPE: printf("T_TWO_PIPE"); break;
+        case T_EXCLAMATION_EQ: printf("T_EXCLAMATION_EQ"); break;
+        case T_PERCENT_EQ: printf("T_PERCENT_EQ"); break;
+        case T_CARET_EQ: printf("T_CARET_EQ"); break;
+        case T_LSHIFT: printf("T_LSHIFT"); break;
+        case T_RSHIFT: printf("T_RSHIFT"); break;
+        case T_INCREASE: printf("T_INCREASE"); break;
+        case T_DECREASE: printf("T_DECREASE"); break;
+        case T_TWO_DOT: printf("T_TWO_DOT"); break;
+        case T_LSHIFT_EQ: printf("T_LSHIFT_EQ"); break;
+        case T_RSHIFT_EQ: printf("T_RSHIFT_EQ"); break;
+        case T_ELLIPSIS: printf("T_ELLIPSIS"); break;
+        case T_INTEGER: printf("T_INTEGER"); break;
+        case T_FLOAT: printf("T_FLOAT"); break;
+        case T_IDENT: printf("T_IDENT"); break;
+        case T_KEYWORD: printf("T_KEYWORD"); break;
+        case T_COMMENT_LINE: printf("T_COMMENT_LINE"); break;
+        case T_COMMENT_BLOCK: printf("T_COMMENT_BLOCK"); break;
+        case T_CHAR: printf("T_CHAR"); break;
+        case T_STRING: printf("T_STRING"); break;
+        case T_FSTRING_START: printf("T_FSTRING_START"); break;
+        case T_FSTRING_BODY: printf("T_FSTRING_BODY"); break;
+        case T_FSTRING_END: printf("T_FSTRING_END"); break;
+        case T_RSTRING: printf("T_RSTRING"); break;
+        case T_SPACE: printf("T_SPACE"); break;
+        case T_INDENT: printf("T_INDENT"); break;
+        case T_DEDENT: printf("T_DEDENT"); break;
+        case T_EOL: printf("T_EOL"); break;
+        default: printf("_T_%d", kind); break;
     }
 }
 
@@ -128,7 +128,7 @@ void print_keyword(int id) {
         case KW_VAR: printf("KW_VAR"); break;
         case KW_WHILE: printf("KW_WHILE"); break;
         case KW_YIELD: printf("KW_YIELD"); break;
-        default: printf("KW?[%d]", id); break;
+        default: printf("_KW_%d", id); break;
     }
 }
 
@@ -138,7 +138,7 @@ void print_base(int base) {
         case BASE_HEX: printf("BASE_HEX"); break;
         case BASE_OCT: printf("BASE_OCT"); break;
         case BASE_BIN: printf("BASE_BIN"); break;
-        default: printf("BASE?[%d]", base); break;
+        default: printf("_BASE_%d", base); break;
     }
 }
 
@@ -146,7 +146,7 @@ void print_token(Token tok) {
     printf("%d:%d ", tok.pos.line, tok.pos.column);
     (tok.kind != T_KEYWORD) ? print_token_kind(tok.kind) : print_keyword(tok.id);
     if (tok.value) printf(" `%s`", tok.value);
-    if (tok.type == INTEGER || tok.type == FLOAT) {
+    if (tok.kind == T_INTEGER || tok.kind == T_FLOAT) {
         if (tok.base != 0) {
             printf(" ");
             print_base(tok.base);
