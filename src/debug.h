@@ -3,8 +3,9 @@
 
 #include "token.h"
 #include "lexer.h"
+#include "node.h"
 
-void print_token_type(int type);
+void print_token_kind(int kind);
 
 void print_keyword(int id);
 

@@ -30,9 +30,9 @@ static inline void consume_parse(Parser *p, Node *node) {
     }
 }
 
-static inline bool is_ignore_token(int type) {
-    switch (type) {
-        case COMMENT_LINE: case COMMENT_BLOCK: case SPACE:
+static inline bool is_ignore_token(int kind) {
+    switch (kind) {
+        case T_COMMENT_LINE: case T_COMMENT_BLOCK: case T_SPACE:
             return true;
         default:
             return false;
@@ -51,20 +51,20 @@ static inline Token *current(const Parser *p) {
 // overflow warning: list length is not checked in this function
 static inline void advance(Parser *p) {
     p->offset++;
-    while (is_ignore_token(current(p)->type)) p->offset++;
+    while (is_ignore_token(current(p)->kind)) p->offset++;
 }
 
-static inline bool is_unary_op(int type) {
-    return type == 10 || type == 24 || type == 25 || type == 45 || type == 46;
+static inline bool is_unary_op(int kind) {
+    return kind == 10 || kind == 24 || kind == 25 || kind == 45 || kind == 46;
 }
 
-static inline bool is_binary_op(int type) {
-    return (type >= 1 && type <= 9) || type == 11 || (type >= 29 && type <= 44) || type == 48 || type == 49;
+static inline bool is_binary_op(int kind) {
+    return (kind >= 1 && kind <= 9) || kind == 11 || (kind >= 29 && kind <= 44) || kind == 48 || kind == 49;
 }
 
 static inline bool is_literal(int type) {
     switch (type) {
-        case INTEGER: case FLOAT: case CHAR: case STRING: case RSTRING:
+        case T_INTEGER: case T_FLOAT: case T_CHAR: case T_STRING: case T_RSTRING:
             return true;
         default:
             return false;
@@ -73,7 +73,7 @@ static inline bool is_literal(int type) {
 
 static inline void *parse_var_decl(Parser *p, Node *node) {
     advance(p);
-    if (current(p)->type == IDENT) {
+    if (current(p)->kind == T_IDENT) {
         node->data.var_decl.ident = current(p)->value;
         node->data.var_decl.len = current(p)->len;
         if (current(p)->value[0] == '_')
@@ -87,14 +87,14 @@ static inline Node *parse_expr(Parser *p) {
     Node *expr = make_node(NODE_EXPR, p->expr);
     if (match(p)) {
         Token *tok = current(p);
-        if (is_literal(tok->type)) {
+        if (is_literal(tok->kind)) {
             expr->kind = NODE_LITERAL;
             expr->data.literal.value = tok;
-        } else if (tok->type == IDENT) {
+        } else if (tok->kind == T_IDENT) {
             expr->kind = NODE_IDENT;
             expr->data.ident.name = tok->value;
             expr->data.ident.len = tok->len;
-        } else if (tok->type == KEYWORD) {
+        } else if (tok->kind == T_KEYWORD) {
             switch (tok->id) {
                 case KW_VAR:
                     expr->kind = NODE_VAR_DECL;

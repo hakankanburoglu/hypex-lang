@@ -6,76 +6,77 @@
 
 enum {
     UNKNOWN,
+    T_UNKNOWN,
     // SINGLE
-    EQUAL, // =
-    PLUS, // +
-    MINUS, // -
-    STAR, // *
-    SLASH, // /
-    LESS,  // <
-    GREATER, // >
-    AMPER, // &
-    PIPE, // |
-    EXCLAMATION, // !
-    PERCENT, // %
-    DOT, // .
-    COMMA, // ,
-    COLON, // :
-    SEMI, // ;
-    UNDERSCORE, // _
-    QUEST, // ?
-    LPAR, // (
-    RPAR, // )
-    LSQB, // [
-    RSQB, // ]
-    LBRACE, // {
-    RBRACE, // }
-    CARET, // ^
-    TILDE, // ~
-    AT, // @
-    HASH, // #
-    ESCAPE, // \ //
+    T_EQUAL, // =
+    T_PLUS, // +
+    T_MINUS, // -
+    T_STAR, // *
+    T_SLASH, // /
+    T_LESS,  // <
+    T_GREATER, // >
+    T_AMPER, // &
+    T_PIPE, // |
+    T_EXCLAMATION, // !
+    T_PERCENT, // %
+    T_DOT, // .
+    T_COMMA, // ,
+    T_COLON, // :
+    T_SEMI, // ;
+    T_UNDERSCORE, // _
+    T_QUEST, // ?
+    T_LPAR, // (
+    T_RPAR, // )
+    T_LSQB, // [
+    T_RSQB, // ]
+    T_LBRACE, // {
+    T_RBRACE, // }
+    T_CARET, // ^
+    T_TILDE, // ~
+    T_AT, // @
+    T_HASH, // #
+    T_ESCAPE, // \ //
     // DUAL
-    TWO_EQ, // ==
-    PLUS_EQ, // +=
-    MINUS_EQ, // -=
-    STAR_EQ, // *=
-    SLASH_EQ, // /=
-    LESS_EQ, // <=
-    GREATER_EQ, // >=
-    AMPER_EQ, // &=
-    TWO_AMPER, // &&
-    PIPE_EQ, // |=
-    TWO_PIPE, // ||
-    EXCLAMATION_EQ, // !=
-    PERCENT_EQ, // %=
-    CARET_EQ, // ^=
-    LSHIFT, // <<
-    RSHIFT, // >>
-    INCREASE, // ++
-    DECREASE, // --
-    TWO_DOT, // ..
+    T_TWO_EQ, // ==
+    T_PLUS_EQ, // +=
+    T_MINUS_EQ, // -=
+    T_STAR_EQ, // *=
+    T_SLASH_EQ, // /=
+    T_LESS_EQ, // <=
+    T_GREATER_EQ, // >=
+    T_AMPER_EQ, // &=
+    T_TWO_AMPER, // &&
+    T_PIPE_EQ, // |=
+    T_TWO_PIPE, // ||
+    T_EXCLAMATION_EQ, // !=
+    T_PERCENT_EQ, // %=
+    T_CARET_EQ, // ^=
+    T_LSHIFT, // <<
+    T_RSHIFT, // >>
+    T_INCREASE, // ++
+    T_DECREASE, // --
+    T_TWO_DOT, // ..
     // TRIPLE
-    LSHIFT_EQ, // <<=
-    RSHIFT_EQ, // >>=
-    ELLIPSIS, // ...
+    T_LSHIFT_EQ, // <<=
+    T_RSHIFT_EQ, // >>=
+    T_ELLIPSIS, // ...
     //
-    INTEGER,
-    FLOAT,
-    IDENT,
-    KEYWORD,
-    COMMENT_LINE,
-    COMMENT_BLOCK,
-    CHAR,
-    STRING,
-    FSTRING_START,
-    FSTRING_BODY,
-    FSTRING_END,
-    RSTRING,
-    SPACE,
-    _INDENT,
-    _DEDENT,
-    EOL
+    T_INTEGER,
+    T_FLOAT,
+    T_IDENT,
+    T_KEYWORD,
+    T_COMMENT_LINE,
+    T_COMMENT_BLOCK,
+    T_CHAR,
+    T_STRING,
+    T_FSTRING_START,
+    T_FSTRING_BODY,
+    T_FSTRING_END,
+    T_RSTRING,
+    T_SPACE,
+    T_INDENT,
+    T_DEDENT,
+    T_EOL
 };
 
 enum {
@@ -135,7 +136,7 @@ typedef struct {
 } Pos;
 
 typedef struct {
-    int type;
+    int kind;
     char *value;
     size_t len;
     Pos pos;
@@ -157,7 +158,7 @@ typedef struct {
     };
 } Token;
 
-Token *make_token(int type, Pos pos);
+Token *make_token(int kind, Pos pos);
 
 void init_number(Token *tok);
 

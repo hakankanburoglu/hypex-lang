@@ -6,10 +6,10 @@
 #include "token.h"
 #include "error.h"
 
-Token *make_token(int type, Pos pos) {
+Token *make_token(int kind, Pos pos) {
     Token *tok = (Token *)malloc(sizeof(Token));
     if (!tok) error_hypex();
-    tok->type = type;
+    tok->kind = kind;
     tok->value = NULL;
     tok->len = 0;
     tok->pos = pos;
@@ -49,17 +49,17 @@ void consume_number(Token *tok, char c) {
 }
 
 Token *copy_token(const Token *tok) {
-    Token *r = make_token(tok->type, tok->pos);
+    Token *r = make_token(tok->kind, tok->pos);
     if (tok->value) {
         r->value = (char *)malloc(sizeof(char) * (tok->len + 1));
         if (!r->value) error_hypex();
         strcpy(r->value, tok->value);
     }
     r->len = tok->len;
-    if (r->type == KEYWORD) {
+    if (r->kind == T_KEYWORD) {
         r->id = tok->id;
     }
-    if (r->type == INTEGER) {
+    if (r->kind == T_INTEGER) {
         r->base = tok->base;
         r->num_value = (char *)malloc(sizeof(char) * (tok->num_len + 1));
         if (!r->num_value) error_hypex();
@@ -79,7 +79,7 @@ bool is_number_token(Token *tok) {
 }
 
 void free_token(Token *tok) {
-    if (tok->type == INTEGER || tok->type == FLOAT)
+    if (tok->kind == T_INTEGER || tok->kind == T_FLOAT)
         free(tok->num_value);
     free(tok->value);
     free(tok);
