@@ -253,8 +253,9 @@ static void lex_number(Lexer *lex, Token *buf) {
         }
         break;
     }
-    if (buf->type == FLOAT && buf->base == BASE_HEX && !buf->is_exponent) error_number(lex->file, lex->pos.line, lex->pos.column, buf->value);
-    if (buf->value[buf->len - 1] == '_' || buf->value[buf->len - 1] == '.') error_number(lex->file, lex->pos.line, lex->pos.column, buf->value);
+    if ( (buf->kind == T_FLOAT && buf->base == BASE_HEX && !buf->is_exponent)
+        || (buf->value[buf->len - 1] == '_' || buf->value[buf->len - 1] == '.'))
+        error_number(lex->file, lex->pos.line, lex->pos.column, buf->value);
 }
 
 static void lex_ident(Lexer *lex, Token *buf) {
