@@ -27,8 +27,6 @@ typedef struct {
 
 Lexer *init_lexer(const char *input, const char *file);
 
-void consume_lex(Lexer *lex, Token *tok);
-
 void tokenize(Lexer *lex);
 
 void free_lex(Lexer *lex);

@@ -55,7 +55,7 @@ Lexer *init_lexer(const char *input, const char *file) {
     return lex;
 }
 
-void consume_lex(Lexer *lex, Token *tok) {
+static inline void consume_lex(Lexer *lex, Token *tok) {
     if (!lex->tok_list) {
         lex->tok_list = (Token **)realloc(lex->tok_list, sizeof(Token));
         if (!lex->tok_list) error_hypex();
