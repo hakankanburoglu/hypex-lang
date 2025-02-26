@@ -70,14 +70,6 @@ Token *copy_token(const Token *tok) {
     return r;
 }
 
-bool is_operator_token(Token *tok) {
-    return tok->type > 0 && tok->type < 51;
-}
-
-bool is_number_token(Token *tok) {
-    return tok->type == INTEGER || tok->type == FLOAT;
-}
-
 void free_token(Token *tok) {
     if (tok->kind == T_INTEGER || tok->kind == T_FLOAT)
         free(tok->num_value);
