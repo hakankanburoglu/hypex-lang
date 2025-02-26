@@ -4,6 +4,7 @@
 
 #include "token.h"
 #include "lexer.h"
+#include "node.h"
 #include "debug.h"
 
 static inline const char *file_name(const char *file) {
@@ -166,4 +167,29 @@ void print_lexer(Lexer lex) {
     printf("lex:%s:%d:%d offset:%d len:%d stk_len:%d stk_cap:%d ind:%d newln:%d pot_fs:%d pot_rs:%d fs_body:%d fs_expr:%d\n\n", file_name(lex.file), lex.pos.line, lex.pos.column, lex.len, lex.stack_len, lex.stack_capacity, lex.indent, lex.offset, lex.newline, lex.potential_fstring, lex.potential_rstring, lex.fstring_body, lex.fstring_expr);
     for (int i = 0; i < lex.len; i++)
         print_token(*(lex.tok_list[i]));
+}
+
+void print_node_kind(int kind) {
+    switch (kind) {
+        case NODE_SOURCE: printf("node_source"); break;
+        case NODE_EXPR: printf("node_expr"); break;
+        case NODE_ASSIGN_EXPR: printf("node_assign_expr"); break;
+        case NODE_PRE_UNARY_OP: printf("node_pre_unary_op"); break;
+        case NODE_POST_UNARY_OP: printf("node_post_unary_op"); break;
+        case NODE_BINARY_OP: printf("node_binary_op"); break;
+        case NODE_TERNARY_OP: printf("node_ternary_op"); break;
+        case NODE_LITERAL: printf("node_literal"); break;
+        case NODE_IDENT: printf("node_ident"); break;
+        case NODE_LOGIC_EXPR: printf("node_logic_expr"); break;
+        case NODE_PAREN_GROUP: printf("node_paren_group"); break;
+        case NODE_FUNC_DECL: printf("node_func_decl"); break;
+        case NODE_VAR_DECL: printf("node_var_decl"); break;
+        case NODE_CALL_EXPR: printf("node_call_expr"); break;
+        default: printf("_node_%d", kind); break;
+    }
+}
+
+void print_node(Node node) {
+    print_node_kind(node.kind);
+    printf("\n");
 }

@@ -15,4 +15,8 @@ void print_token(Token tok);
 
 void print_lexer(Lexer lex);
 
+void print_node_kind(int kind);
+
+void print_node(Node node);
+
 #endif //DEBUG_H
