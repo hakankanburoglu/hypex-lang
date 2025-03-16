@@ -15,4 +15,6 @@ void error_number(const char *file, int line, int column, const char *value);
 
 void error_indent(const char *file, int line, int column);
 
+void error_expect(const char *file, int line, int column, const char *expect);
+
 #endif //ERROR_H

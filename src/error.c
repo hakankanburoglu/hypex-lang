@@ -50,3 +50,7 @@ void error_number(const char *file, int line, int column, const char *value) {
 void error_indent(const char *file, int line, int column) {
     print_error(file, line, column, "invalid indentation\n");
 }
+
+void error_expect(const char *file, int line, int column, const char *expect) {
+    print_error(file, line, column, "expected %s\n", expect);   
+}

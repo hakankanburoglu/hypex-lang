@@ -12,31 +12,91 @@ Parser *init_parser(Lexer *lex) {
     p->tok_list = lex->tok_list;
     p->toklen = lex->len;
     p->expr = make_node(NODE_SOURCE, NULL);
+    p->expr->data.block.body = NULL;
+    p->expr->data.block.capacity = 1;
+    p->expr->data.block.len = 0;
+    p->file = lex->file;
     p->offset = 0;
     return p;
 }
 
-// only for SOURCE_NODE
-static inline void consume_parse(Parser *p, Node *node) {
-    if (!p->expr->data.source.body) {
-        p->expr->data.source.body = (Node **)realloc(p->expr->data.source.body, sizeof(Node));
-        if (!p->expr->data.source.body) error_hypex();
-        p->expr->data.source.len = 1;
-        p->expr->data.source.body[0] = node;
-    } else {
-        p->expr->data.source.body = (Node **)realloc(p->expr->data.source.body, sizeof(Node) * (p->expr->data.source.len + 1));
-        if (!p->expr->data.source.body) error_hypex();
-        p->expr->data.source.len++;
-        p->expr->data.source.body[p->expr->data.source.len - 1] = node;   
+static inline void init_block(Node *node) {
+    node->data.block.body = NULL;
+    node->data.block.capacity = 1;
+    node->data.block.len = 0;
+}
+
+static inline void init_unary_op(Node *node) {
+    node->data.unary_op.op = -1;
+    node->data.unary_op.operand = NULL;
+    node->data.unary_op.prefix = false;
+}
+
+static inline void init_binary_op(Node *node) {
+    node->data.binary_op.op = -1;
+    node->data.binary_op.left = NULL;
+    node->data.binary_op.right = NULL;
+}
+
+static inline void init_ternary_op(Node *node) {
+    node->data.ternary_op.cond = NULL;
+    node->data.ternary_op.if_body = NULL;
+    node->data.ternary_op.else_body = NULL;
+}
+
+static inline void init_func_decl(Node *node) {
+    node->data.func_decl.ident = NULL;
+    node->data.func_decl.type = make_type(TYPE_NOTYPE);
+    node->data.func_decl.args = NULL;
+    node->data.func_decl.args_capacity = 1;
+    node->data.func_decl.args_len = 0;
+    node->data.func_decl.body = NULL;
+}
+
+static inline void init_var_decl(Node *node) {
+    node->data.var_decl.ident = NULL;
+    node->data.var_decl.type = make_type(TYPE_NOTYPE);
+    node->data.var_decl.init = NULL;
+}
+
+static inline void init_call_expr(Node *node) {
+    node->data.call_expr.callee = NULL;
+    node->data.call_expr.len = 0;
+    node->data.call_expr.args = NULL;
+    node->data.call_expr.args_capacity = 1;
+    node->data.call_expr.args_len = 0;
+}
+
+static inline void init_arg_decl(Node *node) {
+    node->data.arg_decl.ident = NULL;
+    node->data.arg_decl.type = make_type(TYPE_NOTYPE);
+}
+
+static void push_node(Node ***nodes, size_t *capacity, size_t *len, Node *node) {
+    if (!*nodes) {
+        *nodes = (Node **)realloc(*nodes, sizeof(Node *));
+        if (!*nodes) error_hypex();
     }
+    if (*len == *capacity) {
+        *capacity *= 2;
+        *nodes = (Node **)realloc(*nodes, *capacity * sizeof(Node *));
+        if (!*nodes) error_hypex();
+    }
+    (*nodes)[(*len)++] = node;
+}
+
+static inline void consume_parse(Parser *p, Node *node) {
+    push_node(&(p->expr->data.block.body), &(p->expr->data.block.capacity), &(p->expr->data.block.len), node);
+}
+
+static inline void consume_func_decl_arg(Node *node, Node *arg) {
+    push_node(&(node->data.func_decl.args), &(node->data.func_decl.args_capacity), &(node->data.func_decl.args_len), arg);
 }
 
 static inline bool is_ignore_token(int kind) {
     switch (kind) {
-        case T_COMMENT_LINE: case T_COMMENT_BLOCK: case T_SPACE:
-            return true;
-        default:
-            return false;
+        case T_COMMENT_LINE: case T_COMMENT_BLOCK: case T_SPACE: return true;
+        default: return false;
     }
 }
 
@@ -55,64 +115,186 @@ static inline void advance(Parser *p) {
     while (match(p) && is_ignore_token(current(p)->kind)) p->offset++;
 }
 
-static inline bool is_unary_op(int kind) {
-    return kind == 10 || kind == 24 || kind == 25 || kind == 45 || kind == 46;
+static inline bool advance_match(Parser *p) {
+    advance(p);
+    return match(p);
 }
 
-static inline bool is_binary_op(int kind) {
-    return (kind >= 1 && kind <= 9) || kind == 11 || (kind >= 29 && kind <= 44) || kind == 48 || kind == 49;
+static inline bool is_unary_op(int op) {
+    return op >= 0 && op <= 7;
 }
 
-static inline bool is_literal(int kind) {
-    switch (kind) {
-        case T_INTEGER: case T_FLOAT: case T_CHAR: case T_STRING: case T_RSTRING:
-            return true;
-        default:
-            return false;
+static inline bool is_pre_unary_op(int op) {
+    return op >= 0 && op <= 5;
+}
+
+static inline bool is_post_unary_op(int op) {
+    return op >= 6 && op <= 7;
+}
+
+static inline bool is_binary_op(int op) {
+    return op >= 8;
+}
+
+static bool is_literal(const Token *tok) {
+    switch (tok->kind) {
+        case T_INTEGER: case T_FLOAT: case T_CHAR: case T_STRING: case T_RSTRING: return true;
+        case T_KEYWORD:
+            switch (tok->id) {
+                case KW_FALSE: case KW_NULL: case KW_TRUE: return true;
+                default: return false;
+            }
+        default: return false;
     }
 }
 
-static inline void *parse_var_decl(Parser *p, Node *node) {
+static int match_type(Parser *p, const Token *tok) {
+    if (tok->kind == T_IDENT) return TYPE_IDENT;
+    if (tok->kind != T_KEYWORD) return -1;
+    switch (tok->id) {
+        case KW_INT: return TYPE_INT;
+        case KW_LONG: return TYPE_LONG;
+        case KW_SHORT: return TYPE_SHORT;
+        case KW_FLOAT: return TYPE_FLOAT;
+        case KW_DOUBLE: return TYPE_DOUBLE;
+        case KW_CHAR: return TYPE_CHAR;
+        case KW_STRING: return TYPE_STRING;
+        case KW_UINT: return TYPE_UINT;
+        case KW_ULONG: return TYPE_ULONG;
+        case KW_USHORT: return TYPE_USHORT;
+        case KW_BOOL: return TYPE_BOOL;
+        default: return -1;
+    }
+}
+
+static inline void parser_expect(const Parser *p, const char *expect) {
+    error_expect(p->file, current(p)->pos.line, current(p)->pos.column, expect);
+}
+
+static void parse_type(Parser *p, Type *type);
+
+static void parse_func_decl(Parser *p, Node *node);
+
+static Node *parse_arg_decl(Parser *p, Node *parent);
+
+static Node *parse_ret_stmt(Parser *p, Node *parent);
+
+static void parse_var_decl(Parser *p, Node *node);
+
+static Node *parse_expr(Parser *p);
+
+static void parse_type(Parser *p, Type *type) {
+    const int kind = match_type(p, current(p));
+    if (kind != -1) type->kind = kind;
+    if (current(p)->kind == T_LPAR) {
+        while (match(p) && current(p)->kind != T_RPAR) {
+            advance(p);
+        }
+    }
+}
+
+static void parse_func_decl(Parser *p, Node *node) {
+    node->kind = NODE_FUNC_DECL;
+    init_func_decl(node);
+    if (!advance_match(p) || current(p)->kind != T_IDENT) parser_expect(p, "identifier");
+    node->data.func_decl.ident = current(p);
+    if (!advance_match(p) || current(p)->kind != T_LPAR) parser_expect(p, "'('");
+    if (!advance_match(p)) parser_expect(p, "')' or argument");
+    while (current(p)->kind != T_RPAR) {
+        consume_func_decl_arg(node, parse_arg_decl(p, node));
+        if (!match(p)) {
+            parser_expect(p, "')'");
+            break;
+        }
+        if (current(p)->kind == T_RPAR) break;
+        if (current(p)->kind == T_COMMA) {
+            advance(p);
+        } else {
+            parser_expect(p, "','");
+            break;
+        }
+    }
     advance(p);
-    if (current(p)->kind == T_IDENT) {
-        node->data.var_decl.ident = current(p)->value;
-        node->data.var_decl.len = current(p)->len;
-        if (current(p)->value[0] == '_')
-            node->data.var_decl.attr.is_private = true;
+    switch (current(p)->kind) {
+        case T_COLON: break;
+        case T_SEMI: return;
+        default: parser_expect(p, "function body or ';'"); return;
+    }
+}
+
+static Node *parse_arg_decl(Parser *p, Node *parent) {
+    Node *arg = make_node(NODE_ARG_DECL, parent);
+    init_arg_decl(arg);
+    if (current(p)->kind == T_KEYWORD && current(p)->id == KW_CONST) {
+        if (!advance_match(p) || current(p)->kind != T_COLON) parser_expect(p, "':'");
+        arg->data.arg_decl.type->is_const = true;
+        advance(p);
+    }
+    if (!match(p)) parser_expect(p, "type");
+    parse_type(p, arg->data.arg_decl.type);
+    if (!advance_match(p) || current(p)->kind != T_IDENT) parser_expect(p, "identifier");
+    arg->data.arg_decl.ident = current(p);
+    advance(p);
+    return arg;
+}
+
+static Node *parse_ret_stmt(Parser *p, Node *parent) {
+    Node *stmt = make_node(NODE_RET_STMT, parent);
+    if (!advance_match(p)) parser_expect(p, "statement");
+    stmt->data.stmt.expr = parse_expr(p);
+    return stmt;
+}
+
+static void parse_var_decl(Parser *p, Node *node) {
+    node->kind = NODE_VAR_DECL;
+    init_var_decl(node);
+    if (!advance_match(p)) parser_expect(p, "type or identifier");
+    if (current(p)->kind == T_COLON) {
+        if (!advance_match(p)) parser_expect(p, "type");
+        parse_type(p, node->data.var_decl.type);
+        if (!match(p)) parser_expect(p, "identifier");
+    }
+    node->data.var_decl.ident = current(p);
+    if (!advance_match(p)) return;
+    if (current(p)->kind == T_EQUAL) {
+        node->data.var_decl.init = parse_expr(p);
+    }
+}
+
+static Node *parse_expr(Parser *p) {
+    Node *expr = make_node(NODE_EXPR, p->expr);
+    Token *tok = current(p);
+    bool is_static = false;
+    if (tok->kind == T_STAR) {
+        is_static = true;
+        if (!advance_match(p)) parser_expect(p, "expression");
+    }
+    if (is_literal(tok)) {
+        expr->kind = NODE_LITERAL;
+        expr->data.literal.value = tok;
+    } else if (tok->kind == T_IDENT) {
+        expr->kind = NODE_IDENT;
+        expr->data.ident.value = tok;
+    } else if (tok->kind == T_KEYWORD) {
+        switch (tok->id) {
+            case KW_FUNC:
+                if (is_static) expr->data.func_decl.type->is_static = true;
+                parse_func_decl(p, expr);
+                break;
+            case KW_VAR:
+                if (is_static) expr->data.var_decl.type->is_static = true;
+                parse_var_decl(p, expr);
+                break;
+            case KW_CONST:
+                expr->data.var_decl.type->is_const = true;
+                parse_var_decl(p, expr);
+                break;
+            default:
+                error_hypex();
+                break;
+        }
     } else {
         error_hypex();
-    }
-}
-
-static inline Node *parse_expr(Parser *p) {
-    Node *expr = make_node(NODE_EXPR, p->expr);
-    if (match(p)) {
-        Token *tok = current(p);
-        if (is_literal(tok->kind)) {
-            expr->kind = NODE_LITERAL;
-            expr->data.literal.value = tok;
-        } else if (tok->kind == T_IDENT) {
-            expr->kind = NODE_IDENT;
-            expr->data.ident.name = tok->value;
-            expr->data.ident.len = tok->len;
-        } else if (tok->kind == T_KEYWORD) {
-            switch (tok->id) {
-                case KW_VAR:
-                    expr->kind = NODE_VAR_DECL;
-                    parse_var_decl(p, expr);
-                    break;
-                case KW_CONST:
-                    expr->kind = NODE_VAR_DECL;
-                    expr->data.var_decl.attr.is_const = true;
-                    parse_var_decl(p, expr);
-                    break;
-                default:
-                    error_hypex();
-                    break;
-            }
-        } else {
-            error_hypex();
-        }
     }
     return expr;
 }

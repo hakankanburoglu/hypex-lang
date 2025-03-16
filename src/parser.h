@@ -11,6 +11,7 @@ typedef struct {
     Token **tok_list;
     size_t toklen;
     Node *expr;
+    char *file;
     int offset;
 } Parser;
 

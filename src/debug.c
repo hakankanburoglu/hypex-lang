@@ -5,83 +5,84 @@
 #include "token.h"
 #include "lexer.h"
 #include "node.h"
+#include "parser.h"
 #include "debug.h"
 
 static inline const char *file_name(const char *file) {
-    const char *res = strrchr(file, '/'); //for Unix
-    if (!res) res = strrchr(file, '\\'); //for Non-Unix
+    const char *res = strrchr(file, '/'); // for unix
+    if (!res) res = strrchr(file, '\\'); // for non-unix
     return res ? res + 1 : file;
 }
 
 void print_token_kind(int kind) {
     switch (kind) {
-        case T_UNKNOWN: printf("T_UNKNOWN"); break;
-        case T_EQUAL: printf("T_EQUAL"); break;
-        case T_PLUS: printf("T_PLUS"); break;
-        case T_MINUS: printf("T_MINUS"); break;
-        case T_STAR: printf("T_STAR"); break;
-        case T_SLASH: printf("T_SLASH"); break;
-        case T_LESS: printf("T_LESS"); break;
-        case T_GREATER: printf("T_GREATER"); break;
-        case T_AMPER: printf("T_AMPER"); break;
-        case T_PIPE: printf("T_PIPE"); break;
-        case T_EXCLAMATION: printf("T_EXCLAMATION"); break;
-        case T_PERCENT: printf("T_PERCENT"); break;
-        case T_DOT: printf("T_DOT"); break;
-        case T_COMMA: printf("T_COMMA"); break;
-        case T_COLON: printf("T_COLON"); break;
-        case T_SEMI: printf("T_SEMI"); break;
-        case T_UNDERSCORE: printf("T_UNDERSCORE"); break;
-        case T_QUEST: printf("T_QUEST"); break;
-        case T_LPAR: printf("T_LPAR"); break;
-        case T_RPAR: printf("T_RPAR"); break;
-        case T_LSQB: printf("T_LSQB"); break;
-        case T_RSQB: printf("T_RSQB"); break;
-        case T_LBRACE: printf("T_LBRACE"); break;
-        case T_RBRACE: printf("T_RBRACE"); break;
-        case T_CARET: printf("T_CARET"); break;
-        case T_TILDE: printf("T_TILDE"); break;
-        case T_AT: printf("T_AT"); break;
-        case T_HASH: printf("T_HASH"); break;
-        case T_ESCAPE: printf("T_ESCAPE"); break;
-        case T_TWO_EQ: printf("T_TWO_EQ"); break;
-        case T_PLUS_EQ: printf("T_PLUS_EQ"); break;
-        case T_MINUS_EQ: printf("T_MINUS_EQ"); break;
-        case T_STAR_EQ: printf("T_STAR_EQ"); break;
-        case T_SLASH_EQ: printf("T_SLASH_EQ"); break;
-        case T_LESS_EQ: printf("T_LESS_EQ"); break;
-        case T_GREATER_EQ: printf("T_GREATER_EQ"); break;
-        case T_AMPER_EQ: printf("T_AMPER_EQ"); break;
-        case T_TWO_AMPER: printf("T_TWO_AMPER"); break;
-        case T_PIPE_EQ: printf("T_PIPE_EQ"); break;
-        case T_TWO_PIPE: printf("T_TWO_PIPE"); break;
-        case T_EXCLAMATION_EQ: printf("T_EXCLAMATION_EQ"); break;
-        case T_PERCENT_EQ: printf("T_PERCENT_EQ"); break;
-        case T_CARET_EQ: printf("T_CARET_EQ"); break;
-        case T_LSHIFT: printf("T_LSHIFT"); break;
-        case T_RSHIFT: printf("T_RSHIFT"); break;
-        case T_INCREASE: printf("T_INCREASE"); break;
-        case T_DECREASE: printf("T_DECREASE"); break;
-        case T_TWO_DOT: printf("T_TWO_DOT"); break;
-        case T_LSHIFT_EQ: printf("T_LSHIFT_EQ"); break;
-        case T_RSHIFT_EQ: printf("T_RSHIFT_EQ"); break;
-        case T_ELLIPSIS: printf("T_ELLIPSIS"); break;
-        case T_INTEGER: printf("T_INTEGER"); break;
-        case T_FLOAT: printf("T_FLOAT"); break;
-        case T_IDENT: printf("T_IDENT"); break;
-        case T_KEYWORD: printf("T_KEYWORD"); break;
-        case T_COMMENT_LINE: printf("T_COMMENT_LINE"); break;
-        case T_COMMENT_BLOCK: printf("T_COMMENT_BLOCK"); break;
-        case T_CHAR: printf("T_CHAR"); break;
-        case T_STRING: printf("T_STRING"); break;
-        case T_FSTRING_START: printf("T_FSTRING_START"); break;
-        case T_FSTRING_BODY: printf("T_FSTRING_BODY"); break;
-        case T_FSTRING_END: printf("T_FSTRING_END"); break;
-        case T_RSTRING: printf("T_RSTRING"); break;
-        case T_SPACE: printf("T_SPACE"); break;
-        case T_INDENT: printf("T_INDENT"); break;
-        case T_DEDENT: printf("T_DEDENT"); break;
-        case T_EOL: printf("T_EOL"); break;
+        case T_UNKNOWN: printf("UNKNOWN"); break;
+        case T_EQUAL: printf("EQUAL"); break;
+        case T_PLUS: printf("PLUS"); break;
+        case T_MINUS: printf("MINUS"); break;
+        case T_STAR: printf("STAR"); break;
+        case T_SLASH: printf("SLASH"); break;
+        case T_LESS: printf("LESS"); break;
+        case T_GREATER: printf("GREATER"); break;
+        case T_AMPER: printf("AMPER"); break;
+        case T_PIPE: printf("PIPE"); break;
+        case T_EXCLAMATION: printf("EXCLAMATION"); break;
+        case T_PERCENT: printf("PERCENT"); break;
+        case T_DOT: printf("DOT"); break;
+        case T_COMMA: printf("COMMA"); break;
+        case T_COLON: printf("COLON"); break;
+        case T_SEMI: printf("SEMI"); break;
+        case T_UNDERSCORE: printf("UNDERSCORE"); break;
+        case T_QUEST: printf("QUEST"); break;
+        case T_LPAR: printf("LPAR"); break;
+        case T_RPAR: printf("RPAR"); break;
+        case T_LSQB: printf("LSQB"); break;
+        case T_RSQB: printf("RSQB"); break;
+        case T_LBRACE: printf("LBRACE"); break;
+        case T_RBRACE: printf("RBRACE"); break;
+        case T_CARET: printf("CARET"); break;
+        case T_TILDE: printf("TILDE"); break;
+        case T_AT: printf("AT"); break;
+        case T_HASH: printf("HASH"); break;
+        case T_ESCAPE: printf("ESCAPE"); break;
+        case T_TWO_EQ: printf("TWO_EQ"); break;
+        case T_PLUS_EQ: printf("PLUS_EQ"); break;
+        case T_MINUS_EQ: printf("MINUS_EQ"); break;
+        case T_STAR_EQ: printf("STAR_EQ"); break;
+        case T_SLASH_EQ: printf("SLASH_EQ"); break;
+        case T_LESS_EQ: printf("LESS_EQ"); break;
+        case T_GREATER_EQ: printf("GREATER_EQ"); break;
+        case T_AMPER_EQ: printf("AMPER_EQ"); break;
+        case T_TWO_AMPER: printf("TWO_AMPER"); break;
+        case T_PIPE_EQ: printf("PIPE_EQ"); break;
+        case T_TWO_PIPE: printf("TWO_PIPE"); break;
+        case T_EXCLAMATION_EQ: printf("EXCLAMATION_EQ"); break;
+        case T_PERCENT_EQ: printf("PERCENT_EQ"); break;
+        case T_CARET_EQ: printf("CARET_EQ"); break;
+        case T_LSHIFT: printf("LSHIFT"); break;
+        case T_RSHIFT: printf("RSHIFT"); break;
+        case T_INCREASE: printf("INCREASE"); break;
+        case T_DECREASE: printf("DECREASE"); break;
+        case T_TWO_DOT: printf("TWO_DOT"); break;
+        case T_LSHIFT_EQ: printf("LSHIFT_EQ"); break;
+        case T_RSHIFT_EQ: printf("RSHIFT_EQ"); break;
+        case T_ELLIPSIS: printf("ELLIPSIS"); break;
+        case T_INTEGER: printf("INTEGER"); break;
+        case T_FLOAT: printf("FLOAT"); break;
+        case T_IDENT: printf("IDENT"); break;
+        case T_KEYWORD: printf("KEYWORD"); break;
+        case T_COMMENT_LINE: printf("COMMENT_LINE"); break;
+        case T_COMMENT_BLOCK: printf("COMMENT_BLOCK"); break;
+        case T_CHAR: printf("CHAR"); break;
+        case T_STRING: printf("STRING"); break;
+        case T_FSTRING_START: printf("FSTRING_START"); break;
+        case T_FSTRING_BODY: printf("FSTRING_BODY"); break;
+        case T_FSTRING_END: printf("FSTRING_END"); break;
+        case T_RSTRING: printf("RSTRING"); break;
+        case T_SPACE: printf("SPACE"); break;
+        case T_INDENT: printf("INDENT"); break;
+        case T_DEDENT: printf("DEDENT"); break;
+        case T_EOL: printf("EOL"); break;
         default: printf("_T_%d", kind); break;
     }
 }
@@ -145,7 +146,7 @@ void print_base(int base) {
 
 void print_token(Token tok) {
     printf("%d:%d ", tok.pos.line, tok.pos.column);
-    (tok.kind != T_KEYWORD) ? print_token_kind(tok.kind) : print_keyword(tok.id);
+    tok.kind != T_KEYWORD ? print_token_kind(tok.kind) : print_keyword(tok.id);
     if (tok.value) printf(" `%s`", tok.value);
     if (tok.kind == T_INTEGER || tok.kind == T_FLOAT) {
         if (tok.base != 0) {
@@ -164,32 +165,200 @@ void print_token(Token tok) {
 }
 
 void print_lexer(Lexer lex) {
-    printf("lex:%s:%d:%d offset:%d len:%d stk_len:%d stk_cap:%d ind:%d newln:%d pot_fs:%d pot_rs:%d fs_body:%d fs_expr:%d\n\n", file_name(lex.file), lex.pos.line, lex.pos.column, lex.len, lex.stack_len, lex.stack_capacity, lex.indent, lex.offset, lex.newline, lex.potential_fstring, lex.potential_rstring, lex.fstring_body, lex.fstring_expr);
+    printf("lex:");
+    if (lex.file) printf("%s:", file_name(lex.file));
+    printf("%d:%d offset:%d len:%d stk_len:%d stk_cap:%d ind:%d newln:%d pot_fs:%d pot_rs:%d fs_body:%d fs_expr:%d\n\n", lex.pos.line, lex.pos.column, lex.len, lex.stack_len, lex.stack_capacity, lex.indent, lex.offset, lex.newline, lex.potential_fstring, lex.potential_rstring, lex.fstring_body, lex.fstring_expr);
     for (int i = 0; i < lex.len; i++)
         print_token(*(lex.tok_list[i]));
 }
 
 void print_node_kind(int kind) {
     switch (kind) {
-        case NODE_SOURCE: printf("node_source"); break;
-        case NODE_EXPR: printf("node_expr"); break;
-        case NODE_ASSIGN_EXPR: printf("node_assign_expr"); break;
-        case NODE_PRE_UNARY_OP: printf("node_pre_unary_op"); break;
-        case NODE_POST_UNARY_OP: printf("node_post_unary_op"); break;
-        case NODE_BINARY_OP: printf("node_binary_op"); break;
-        case NODE_TERNARY_OP: printf("node_ternary_op"); break;
-        case NODE_LITERAL: printf("node_literal"); break;
-        case NODE_IDENT: printf("node_ident"); break;
-        case NODE_LOGIC_EXPR: printf("node_logic_expr"); break;
-        case NODE_PAREN_GROUP: printf("node_paren_group"); break;
-        case NODE_FUNC_DECL: printf("node_func_decl"); break;
-        case NODE_VAR_DECL: printf("node_var_decl"); break;
-        case NODE_CALL_EXPR: printf("node_call_expr"); break;
+        case NODE_SOURCE: printf("source"); break;
+        case NODE_EXPR: printf("expr"); break;
+        case NODE_BLOCK: printf("block"); break;
+        case NODE_UNARY_OP: printf("unary_op"); break;
+        case NODE_BINARY_OP: printf("binary_op"); break;
+        case NODE_TERNARY_OP: printf("ternary_op"); break;
+        case NODE_LITERAL: printf("literal"); break;
+        case NODE_IDENT: printf("ident"); break;
+        case NODE_LOGIC_EXPR: printf("logic_expr"); break;
+        case NODE_PAREN_GROUP: printf("paren_group"); break;
+        case NODE_FUNC_DECL: printf("func_decl"); break;
+        case NODE_ARG_DECL: printf("arg_decl"); break;
+        case NODE_RET_STMT: printf("ret_stmt"); break;
+        case NODE_VAR_DECL: printf("var_decl"); break;
+        case NODE_CALL_EXPR: printf("call_expr"); break;
         default: printf("_node_%d", kind); break;
     }
 }
 
-void print_node(Node node) {
+void print_op(int op) {
+    switch (op) {
+        case OP_NOT: printf("not"); break;
+        case OP_BIT_NOT: printf("bit_not"); break;
+        case OP_NEG: printf("neg"); break;
+        case OP_PRE_INC: printf("pre_inc"); break;
+        case OP_PRE_DEC: printf("pre_dec"); break;
+        case OP_AMPER: printf("amper"); break;
+        case OP_POST_INC: printf("post_inc"); break;
+        case OP_POST_DEC: printf("post_dec"); break;
+        case OP_ACCES: printf("acces"); break;
+        case OP_ASSIGN: printf("assign"); break;
+        case OP_ADD: printf("add"); break;
+        case OP_SUB: printf("sub"); break;
+        case OP_MUL: printf("mul"); break;
+        case OP_DIV: printf("div"); break;
+        case OP_MOD: printf("mod"); break;
+        case OP_EQ: printf("eq"); break;
+        case OP_NE: printf("ne"); break;
+        case OP_LT: printf("lt"); break;
+        case OP_GT: printf("gt"); break;
+        case OP_LE: printf("le"); break;
+        case OP_GE: printf("ge"); break;
+        case OP_BIT_AND: printf("bit_and"); break;
+        case OP_BIT_OR: printf("bit_or"); break;
+        case OP_AND: printf("and"); break;
+        case OP_OR: printf("or"); break;
+        case OP_XOR: printf("xor"); break;
+        case OP_SHL: printf("shl"); break;
+        case OP_SHR: printf("shr"); break;
+        case OP_SLE: printf("sle"); break;
+        case OP_SRE: printf("sre"); break;
+        default: printf("_op_%d", op); break;
+    }
+}
+
+void print_type_kind(int kind) {
+    switch (kind) {
+        case TYPE_NOTYPE: printf("notype"); break;
+        case TYPE_IDENT: printf("ident"); break;
+        case TYPE_INT: printf("int"); break;
+        case TYPE_LONG: printf("long"); break;
+        case TYPE_SHORT: printf("short"); break;
+        case TYPE_FLOAT: printf("float"); break;
+        case TYPE_DOUBLE: printf("double"); break;
+        case TYPE_CHAR: printf("char"); break;
+        case TYPE_UINT: printf("uint"); break;
+        case TYPE_ULONG: printf("ulong"); break;
+        case TYPE_USHORT: printf("ushort"); break;
+        case TYPE_BOOL: printf("bool"); break;
+        case TYPE_STRING: printf("string"); break;
+        case TYPE_OBJECT: printf("object"); break;
+        case TYPE_FUNC: printf("func"); break;
+        case TYPE_ARRAY: printf("array"); break;
+        case TYPE_FIXED_ARRAY: printf("fixed_array"); break;
+        case TYPE_TUPLE: printf("tuple"); break;
+        case TYPE_STRUCT: printf("struct"); break;
+        case TYPE_CLASS: printf("class"); break;
+        case TYPE_IFACE: printf("iface"); break;
+        case TYPE_GENERIC: printf("generic"); break;
+        default: printf("_type_%d", kind);
+    }
+}
+
+static inline void print_indent(int level) {
+    for (int i = 0; i < level; i++)
+        printf("    ");
+}
+
+void print_type(Type type) {
+    printf("<");
+    if (type.is_const) printf("const ");
+    if (type.is_static) printf("static ");
+    if (type.is_private) printf("private ");
+    if (type.is_protected) printf("protected ");
+    if (type.is_by_ref) printf("ref ");
+    print_type_kind(type.kind);
+    if (type.types) {
+        printf(" ");
+        for (int i = 0; i < type.len; i++)
+            print_type(*(type.types[i]));
+    }
+    printf(">");
+}
+
+void print_node(Node node, int level, const char *tag) {
+    print_indent(level);
+    if (tag) printf("%s: ", tag);
     print_node_kind(node.kind);
+    printf(":");
+    switch (node.kind) {
+        case NODE_SOURCE: case NODE_BLOCK:
+            printf("\n");
+            for (int i = 0; i < node.data.block.len; i++)
+                print_node(*(node.data.block.body[i]), level + 1, NULL);
+            break;
+        case NODE_UNARY_OP:
+            printf(", op=");
+            print_op(node.data.unary_op.op);
+            printf(", prefix=");
+            node.data.unary_op.prefix ? printf("true") : printf("false");
+            printf("\n");
+            print_node(*(node.data.unary_op.operand), level + 1, "operand");
+            break;
+        case NODE_BINARY_OP:
+            printf(", op=");
+            print_op(node.data.binary_op.op);
+            printf("\n");
+            print_node(*(node.data.binary_op.left), level + 1, "left");
+            print_node(*(node.data.binary_op.right), level + 1, "right");
+            break;
+        case NODE_TERNARY_OP:
+            printf("\n");
+            print_node(*(node.data.ternary_op.cond), level + 1, "cond");
+            print_node(*(node.data.ternary_op.if_body), level + 1, "if");
+            print_node(*(node.data.ternary_op.else_body), level + 1, "else");
+            break;
+        case NODE_LITERAL:
+            printf(" value=\"%s\"", node.data.literal.value->value);
+            break;
+        case NODE_IDENT:
+            printf(" value=`%s`", node.data.ident.value->value);
+            break;
+        case NODE_FUNC_DECL:
+            printf(" name=`%s` type=", node.data.func_decl.ident->value);
+            node.data.func_decl.type ? print_type(*(node.data.func_decl.type)) : printf("null");
+            printf("\n");
+            if (node.data.func_decl.args_len > 0) {
+                print_indent(level + 1);
+                printf("args:\n");
+                for (int i = 0; i < node.data.func_decl.args_len; i++)
+                    print_node(*(node.data.func_decl.args[i]), level + 2, NULL);
+            }
+            if (node.data.func_decl.body) { 
+                print_node(*(node.data.func_decl.body), level + 1, "body");
+            } else {
+                print_indent(level + 1);
+                printf("body: null");
+            }
+            break;
+        case NODE_VAR_DECL:
+            printf(" ident=`%s` type=", node.data.var_decl.ident->value);
+            node.data.var_decl.type ? print_type(*(node.data.var_decl.type)) : printf("null");
+            printf("\n");
+            if (node.data.var_decl.init) {
+                print_node(*(node.data.var_decl.init), level + 1, "init");
+            } else {
+                print_indent(level + 1);
+                printf("init: null");
+            }
+            break;
+        case NODE_CALL_EXPR:
+            printf(" callee=`%s`\n", node.data.call_expr.callee);
+            for (int i = 0; i < node.data.call_expr.args_len; i++)
+                print_node(*(node.data.call_expr.args[i]), level + 1, "arg");
+            break;
+        case NODE_ARG_DECL:
+            printf(" ident=`%s` type=", node.data.arg_decl.ident->value);
+            node.data.arg_decl.type ? print_type(*(node.data.arg_decl.type)) : printf("null");
+            break;
+        default:
+            break;
+    }
     printf("\n");
+}
+
+void print_parser(Parser p) {
+    p.expr ? print_node(*(p.expr), 0, NULL) : printf("null expr");
 }
