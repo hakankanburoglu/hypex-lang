@@ -136,11 +136,11 @@ void print_keyword(int id) {
 
 void print_base(int base) {
     switch (base) {
-        case BASE_DEC: printf("BASE_DEC"); break;
-        case BASE_HEX: printf("BASE_HEX"); break;
-        case BASE_OCT: printf("BASE_OCT"); break;
-        case BASE_BIN: printf("BASE_BIN"); break;
-        default: printf("_BASE_%d", base); break;
+        case BASE_DEC: printf("dec"); break;
+        case BASE_HEX: printf("hex"); break;
+        case BASE_OCT: printf("oct"); break;
+        case BASE_BIN: printf("bin"); break;
+        default: printf("_base_%d", base); break;
     }
 }
 
@@ -148,16 +148,17 @@ void print_token(Token tok) {
     printf("%d:%d ", tok.pos.line, tok.pos.column);
     tok.kind != T_KEYWORD ? print_token_kind(tok.kind) : print_keyword(tok.id);
     if (tok.value) printf(" `%s`", tok.value);
+    if (tok.kind == T_IDENT && tok.begin_uscore) printf(" (begin_uscore)");
     if (tok.kind == T_INTEGER || tok.kind == T_FLOAT) {
-        if (tok.base != 0) {
-            printf(" ");
-            print_base(tok.base);
+        if (tok.num.base != 0) {
+            printf(" base:");
+            print_base(tok.num.base);
         }
-        if (tok.is_exponent) {
-            if (tok.is_negative) printf(" negative_exponent");
-            else printf(" exponent");
+        if (tok.num.is_exp) {
+            if (tok.num.is_neg) printf(" (neg_exp)");
+            else printf(" (exp)");
         }
-        printf(" num_value:`%s` num_len:%d", tok.num_value, tok.num_len);
+        printf(" num.value:`%s` num.len:%d", tok.num.value, tok.num.len);
     }
     if (tok.kind == T_EOL && tok.is_comment) printf(" (comment)");
     if (tok.kind == T_INDENT || tok.kind == T_DEDENT) printf(" level:%d", tok.level);
@@ -165,11 +166,18 @@ void print_token(Token tok) {
 }
 
 void print_lexer(Lexer lex) {
-    printf("lex:");
-    if (lex.file) printf("%s:", file_name(lex.file));
-    printf("%d:%d offset:%d len:%d stk_len:%d stk_cap:%d ind:%d newln:%d pot_fs:%d pot_rs:%d fs_body:%d fs_expr:%d\n\n", lex.pos.line, lex.pos.column, lex.len, lex.stack_len, lex.stack_capacity, lex.indent, lex.offset, lex.newline, lex.potential_fstring, lex.potential_rstring, lex.fstring_body, lex.fstring_expr);
-    for (int i = 0; i < lex.len; i++)
-        print_token(*(lex.tok_list[i]));
+    for (int i = 0; i < lex.tokens.len; i++)
+        print_token(*(lex.tokens.list[i]));
+    printf("\nresults: total=%d ind={", lex.tokens.len);
+    if (lex.indents.stack) {
+        for (int i = 0; i < lex.indents.len; i++) {
+            printf("%d", lex.indents.stack[i]);
+            if (i != lex.indents.len - 1) printf(", ");
+        }
+    } else {
+        printf("null");
+    }
+    printf("}\n\n");
 }
 
 void print_node_kind(int kind) {
@@ -203,7 +211,7 @@ void print_op(int op) {
         case OP_AMPER: printf("amper"); break;
         case OP_POST_INC: printf("post_inc"); break;
         case OP_POST_DEC: printf("post_dec"); break;
-        case OP_ACCES: printf("acces"); break;
+        case OP_ACCESS: printf("access"); break;
         case OP_ASSIGN: printf("assign"); break;
         case OP_ADD: printf("add"); break;
         case OP_SUB: printf("sub"); break;
