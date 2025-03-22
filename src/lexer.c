@@ -22,7 +22,7 @@ Lexer *init_lexer(const char *input, const char *file) {
     if (!lex) error_hypex();
     if (input) {
         const size_t inputlen = strlen(input);
-        lex->input = (char *)malloc(sizeof(char) * inputlen);
+        lex->input = (char *)malloc(sizeof(char) * (inputlen + 1));
         if (!lex->input) error_hypex();
         strcpy(lex->input, input);
         lex->inputlen = inputlen;
@@ -37,14 +37,15 @@ Lexer *init_lexer(const char *input, const char *file) {
     } else {
         lex->file = NULL;
     }
-    lex->indent_stack = (int *)malloc(sizeof(int));
-    if (!lex->indent_stack) error_hypex();
-    lex->stack_len = 1;
-    lex->stack_capacity = 1;
-    lex->indent_stack[0] = 0;
+    lex->tokens.list = (Token **)malloc(sizeof(Token) * 16);
+    lex->tokens.cap = 16;
+    lex->tokens.len = 0;
+    lex->indents.stack = (int *)malloc(sizeof(int));
+    if (!lex->indents.stack) error_hypex();
+    lex->indents.cap = 1;
+    lex->indents.len = 1;
+    lex->indents.stack[0] = 0;
     lex->indent = 0;
-    lex->tok_list = NULL;
-    lex->len = 0;
     lex->offset = 0;
     lex->pos = (Pos){1, 1};
     lex->newline = false;
@@ -56,49 +57,43 @@ Lexer *init_lexer(const char *input, const char *file) {
 }
 
 static inline void consume_lex(Lexer *lex, Token *tok) {
-    if (!lex->tok_list) {
-        lex->tok_list = (Token **)realloc(lex->tok_list, sizeof(Token));
-        if (!lex->tok_list) error_hypex();
-        lex->len = 1;
-        lex->tok_list[0] = tok;
-    } else {
-        lex->tok_list = (Token **)realloc(lex->tok_list, sizeof(Token) * (lex->len + 1));
-        if (!lex->tok_list) error_hypex();
-        lex->len++;
-        lex->tok_list[lex->len - 1] = tok;   
+    if (lex->tokens.len == lex->tokens.cap) {
+        lex->tokens.cap *= 2;
+        lex->tokens.list = (Token **)realloc(lex->tokens.list, sizeof(Token) * lex->tokens.cap);
+        if (!lex->tokens.list) error_hypex();
     }
+    lex->tokens.list[lex->tokens.len++] = tok;
 }
 
 static inline void push_indent(Lexer *lex, int indent) {
-    if (lex->stack_len == lex->stack_capacity) {
-        lex->stack_capacity *= 2;
-        lex->indent_stack = (int *)realloc(lex->indent_stack, lex->stack_capacity * sizeof(int));
-        if (!lex->indent_stack) error_hypex();
+    if (lex->indents.len == lex->indents.cap) {
+        lex->indents.cap *= 2;
+        lex->indents.stack = (int *)realloc(lex->indents.stack, lex->indents.cap * sizeof(int));
+        if (!lex->indents.stack) error_hypex();
     }
-    lex->indent_stack[lex->stack_len++] = indent;
+    lex->indents.stack[lex->indents.len++] = indent;
 }
 
 static inline void pop_indent(Lexer *lex) {
-    if (lex->stack_len == 0) error_hypex();
-    (lex->stack_len)--;
+    if (lex->indents.len == 0) error_hypex();
+    (lex->indents.len)--;
 }
 
 static inline int peek_indent(const Lexer *lex) {
-    if (lex->stack_len == 0) error_hypex();
-    return lex->indent_stack[lex->stack_len - 1];
+    if (lex->indents.len == 0) error_hypex();
+    return lex->indents.stack[lex->indents.len - 1];
 }
 
 static inline void clear_indent(Lexer *lex) {
-    lex->stack_len = 1;
-    lex->stack_capacity = 1;
+    lex->indents.len = 1;
 }
 
 static inline bool empty_indent(const Lexer *lex) {
-    return lex->stack_len == 1;
+    return lex->indents.len == 1;
 }
 
 static inline Token *last_token(const Lexer *lex) {
-    return lex->tok_list[lex->len - 1];
+    return lex->tokens.list[lex->tokens.len - 1];
 }
 
 static inline bool match_lex(const Lexer *lex) {
@@ -125,9 +120,9 @@ static inline bool is_letter(const Lexer *lex) {
 }
 
 static inline bool is_exponent(const Token *buf, char c) {
-    if (!buf->is_exponent) {
-        if (buf->base == BASE_DEC && (c == 'e' || c == 'E')) return true;
-        if (buf->base == BASE_HEX && (c == 'p' || c == 'P')) return true;
+    if (!buf->num.is_exp) {
+        if (buf->num.base == BASE_DEC && (c == 'e' || c == 'E')) return true;
+        if (buf->num.base == BASE_HEX && (c == 'p' || c == 'P')) return true;
     }
     return false;
 }
@@ -143,11 +138,11 @@ static inline bool is_eol(Lexer *lex) {
         advance_lex(lex);
         if (!match_lex(lex))
             return true;
-        if (current_lex(lex) == '\n') //CRLF
+        if (current_lex(lex) == '\n') // CRLF
             return true;
-        return true; //CR
+        return true; // CR
     }
-    return current_lex(lex) == '\n'; //LF
+    return current_lex(lex) == '\n'; // LF
 }
 
 static int match_base(char c) {
@@ -163,8 +158,8 @@ static int match_base(char c) {
     }
 }
 
-static inline int compare_keywords(const void *a, const void *b) {
-    return strcmp(*(const char **)a, *(const char **)b);
+static inline int compare_keywords(const void *s1, const void *s2) {
+    return strcmp(*(const char **)s1, *(const char **)s2);
 }
 
 static inline int match_keyword(const char *s) {
@@ -190,7 +185,7 @@ static void lex_number(Lexer *lex, Token *buf) {
     if (buf->value[0] == '0') {
         const int base = match_base(current_lex(lex));
         if (base != 0) {
-            buf->base = base;
+            buf->num.base = base;
             lex_digit(lex, buf, current_lex(lex));
         }
     }
@@ -201,13 +196,13 @@ static void lex_number(Lexer *lex, Token *buf) {
             advance_lex(lex);
             continue;
         }
-        if (buf->is_exponent) {
+        if (buf->num.is_exp) {
             if (isdigit(c)) {
                 lex_digit(lex, buf, c);
                 continue;
             }
-            if (!buf->is_negative && c == '-') {
-                buf->is_negative = true;
+            if (!buf->num.is_neg && c == '-') {
+                buf->num.is_neg = true;
                 lex_digit(lex, buf, c);
                 continue;
             }
@@ -218,11 +213,11 @@ static void lex_number(Lexer *lex, Token *buf) {
             continue;
         }
         if (is_exponent(buf, c)) {
-            buf->is_exponent = true;
+            buf->num.is_exp = true;
             lex_digit(lex, buf, c);
             continue;
         }
-        switch (buf->base) {
+        switch (buf->num.base) {
             case BASE_DEC:
                 if (isdigit(c)) {
                     lex_digit(lex, buf, c);
@@ -253,13 +248,14 @@ static void lex_number(Lexer *lex, Token *buf) {
         }
         break;
     }
-    if ( (buf->kind == T_FLOAT && buf->base == BASE_HEX && !buf->is_exponent)
+    if ( (buf->kind == T_FLOAT && buf->num.base == BASE_HEX && !buf->num.is_exp)
         || (buf->value[buf->len - 1] == '_' || buf->value[buf->len - 1] == '.'))
         error_number(lex->file, lex->pos.line, lex->pos.column, buf->value);
 }
 
-static void lex_ident(Lexer *lex, Token *buf) {
+static void lex_ident(Lexer *lex, Token *buf, bool begin_uscore) {
     buf->kind = T_IDENT;
+    buf->begin_uscore = begin_uscore;
     consume_token(buf, current_lex(lex));
     advance_lex(lex);
     while (match_lex(lex) && is_ident_body(lex)) {
@@ -285,7 +281,7 @@ static void lex_comment_eol(Lexer *lex, Token *buf) {
     buf->value = NULL;
     buf->len = 0;
     consume_lex(lex, make_token(T_EOL, lex->pos));
-    lex->tok_list[lex->len - 1]->is_comment = true;
+    lex->tokens.list[lex->tokens.len - 1]->is_comment = true;
     lex->pos.line++;
     lex->pos.column = 0;
     advance_lex(lex);
@@ -372,7 +368,7 @@ static void lex_fstring_body(Lexer *lex, Token *buf) {
 }
 
 static void lex_rstring(Lexer *lex) {
-    Token *last = lex->tok_list[lex->len - 1];
+    Token *last = lex->tokens.list[lex->tokens.len - 1];
     last->kind = T_RSTRING;
     last->value = NULL;
     last->len = 0;
@@ -388,7 +384,7 @@ static void lex_indent(Lexer *lex, Token *buf) {
     int indent = buf->len - lex->indent;
     buf->kind = T_INDENT;
     if (indent == 0) {
-        buf->level++;
+        buf->level = 0;
         return;
     }
     if (indent > 0) {
@@ -400,15 +396,14 @@ static void lex_indent(Lexer *lex, Token *buf) {
     if (indent < 0) {
         buf->kind = T_DEDENT;
         size_t buflen = buf->len;
-        for (int i = lex->stack_len - 1; i >= 0; i--) {
+        for (int i = lex->indents.len - 1; i >= 0; i--) {
             if (buflen == 0) break;
-            if (buflen < lex->indent_stack[i]) error_indent(lex->file, lex->pos.line, lex->pos.column);
-            buflen -= lex->indent_stack[i];
+            if (buflen < lex->indents.stack[i]) error_indent(lex->file, lex->pos.line, lex->pos.column);
+            buflen -= lex->indents.stack[i];
             pop_indent(lex);
             buf->level++;
             lex->indent--;
         }
-        return;
     }
 }
 
@@ -434,7 +429,7 @@ void tokenize(Lexer *lex) {
             lex->pos.column = 1;
             if (current_lex(lex) != ' ' && !empty_indent(lex)) {
                 consume_lex(lex, make_token(T_DEDENT, lex->pos));
-                lex->tok_list[lex->len - 1]->level = -1;
+                lex->tokens.list[lex->tokens.len - 1]->level = -1;
                 clear_indent(lex);
                 advance_lex(lex);
             }
@@ -612,7 +607,7 @@ void tokenize(Lexer *lex) {
                 lex_operator(lex, buf, T_UNDERSCORE);
                 if (match_lex(lex) && is_ident_body(lex)) {
                     consume_token(buf, '_');
-                    lex_ident(lex, buf);
+                    lex_ident(lex, buf, 1);
                 }
                 break;
             case '?':
@@ -676,7 +671,7 @@ void tokenize(Lexer *lex) {
                 else if (is_number(lex))
                     lex_number(lex, buf);
                 else if (is_letter(lex))
-                    lex_ident(lex, buf);
+                    lex_ident(lex, buf, false);
                 else
                     lex_invalid(lex);
                 break;
@@ -688,9 +683,9 @@ void tokenize(Lexer *lex) {
 void free_lex(Lexer *lex) {
     free(lex->input);
     free(lex->file);
-    for (int i = 0; i < lex->len; i++)
-        free_token(lex->tok_list[i]);
-    free(lex->tok_list);
-    free(lex->indent_stack);
+    for (int i = 0; i < lex->tokens.len; i++)
+        free_token(lex->tokens.list[i]);
+    free(lex->tokens.list);
+    free(lex->indents.stack);
     free(lex);
 }

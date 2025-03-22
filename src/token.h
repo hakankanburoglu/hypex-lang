@@ -137,19 +137,22 @@ typedef struct {
 typedef struct {
     int kind;
     char *value;
+    size_t cap;
     size_t len;
     Pos pos;
     union {
+        //IDENT
+        bool begin_uscore;
         //KEYWORD
         int id;
         //INTEGER, FLOAT
         struct {
             int base;
-            char *num_value;
-            size_t num_len;
-            bool is_exponent;
-            bool is_negative;
-        };
+            char *value;
+            size_t len;
+            bool is_exp;
+            bool is_neg;
+        } num;
         //_INDENT, _DEDENT
         int level;
         //EOL

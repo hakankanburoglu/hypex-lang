@@ -10,11 +10,16 @@ typedef struct {
     char *input;
     size_t inputlen;
     char *file;
-    Token **tok_list;
-    size_t len;
-    int *indent_stack;
-    size_t stack_len;
-    size_t stack_capacity;
+    struct {
+        Token **list;
+        size_t cap;
+        size_t len;
+    } tokens;
+    struct {
+        int *stack;
+        size_t cap;
+        size_t len;
+    } indents;
     int indent;
     int offset;
     Pos pos;
