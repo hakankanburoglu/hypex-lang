@@ -27,7 +27,7 @@ Type *make_type(int kind) {
     Type *type = (Type *)malloc(sizeof(Type));
     type->kind = kind;
     type->types = NULL;
-    type->capacity = 1;
+    type->cap = 1;
     type->len = 0;
     type->is_const = false;
     type->is_static = false;
@@ -38,9 +38,9 @@ Type *make_type(int kind) {
 }
 
 void push_type(Type *type, Type *elm) {
-    if (type->len == type->capacity) {
-        type->capacity *= 2;
-        type->types = (Type **)realloc(type->types, sizeof(Type) * type->capacity);
+    if (type->len == type->cap) {
+        type->cap *= 2;
+        type->types = (Type **)realloc(type->types, sizeof(Type) * type->cap);
         if (!type->types) error_hypex();
     }
     type->types[type->len++] = elm;
@@ -63,11 +63,11 @@ Node *copy_node(Node *node) {
     r->toklen = node->toklen;
     switch (node->kind) {
         case NODE_SOURCE: case NODE_BLOCK:
-            r->data.block.body = (Node **)malloc(sizeof(Node) * node->data.block.capacity);
+            r->data.block.body = (Node **)malloc(sizeof(Node) * node->data.block.cap);
             if (!r->data.block.body) error_hypex();
             for (int i = 0; i < node->data.block.len; i++)
                 r->data.block.body[i] = node->data.block.body[i];
-            r->data.block.capacity = node->data.block.capacity;
+            r->data.block.cap = node->data.block.cap;
             r->data.block.len = node->data.block.len;
             break;
         case NODE_UNARY_OP:
@@ -94,11 +94,11 @@ Node *copy_node(Node *node) {
         case NODE_FUNC_DECL:
             r->data.func_decl.ident = node->data.func_decl.ident;
             r->data.func_decl.type = copy_type(node->data.func_decl.type);
-            r->data.func_decl.args = (Node **)malloc(sizeof(Node) * node->data.func_decl.args_capacity);
+            r->data.func_decl.args = (Node **)malloc(sizeof(Node) * node->data.func_decl.args_cap);
             if (!r->data.func_decl.args) error_hypex();
             for (int i = 0; i < node->data.func_decl.args_len; i++)
                 r->data.func_decl.args[i] = node->data.func_decl.args[i];
-            r->data.func_decl.args_capacity = node->data.func_decl.args_capacity;
+            r->data.func_decl.args_cap = node->data.func_decl.args_cap;
             r->data.func_decl.args_len = node->data.func_decl.args_len;
             r->data.func_decl.body = node->data.func_decl.body;
             break;
@@ -111,16 +111,17 @@ Node *copy_node(Node *node) {
             r->data.call_expr.callee = (char *)malloc(sizeof(char) * (node->data.call_expr.len + 1));
             if (!r->data.call_expr.callee) error_hypex();
             strcpy(r->data.call_expr.callee, node->data.call_expr.callee);
-            r->data.call_expr.args = (Node **)malloc(sizeof(Node) * node->data.call_expr.args_capacity);
+            r->data.call_expr.args = (Node **)malloc(sizeof(Node) * node->data.call_expr.args_cap);
             if (!r->data.call_expr.args) error_hypex();
             for (int i = 0; i < node->data.call_expr.args_len; i++)
                 r->data.call_expr.args[i] = node->data.call_expr.args[i];
-            r->data.call_expr.args_capacity = node->data.call_expr.args_capacity;
+            r->data.call_expr.args_cap = node->data.call_expr.args_cap;
             r->data.call_expr.args_len = node->data.call_expr.args_len;
             break;
         default:
             break;
     }
+    return r;
 }
 
 void free_node(Node *node) {

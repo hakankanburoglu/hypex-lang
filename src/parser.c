@@ -9,11 +9,11 @@
 
 Parser *init_parser(Lexer *lex) {
     Parser *p = (Parser *)malloc(sizeof(Parser));
-    p->tok_list = lex->tok_list;
-    p->toklen = lex->len;
+    p->tok_list = lex->tokens.list;
+    p->toklen = lex->tokens.len;
     p->expr = make_node(NODE_SOURCE, NULL);
     p->expr->data.block.body = NULL;
-    p->expr->data.block.capacity = 1;
+    p->expr->data.block.cap = 1;
     p->expr->data.block.len = 0;
     p->file = lex->file;
     p->offset = 0;
@@ -22,7 +22,7 @@ Parser *init_parser(Lexer *lex) {
 
 static inline void init_block(Node *node) {
     node->data.block.body = NULL;
-    node->data.block.capacity = 1;
+    node->data.block.cap = 1;
     node->data.block.len = 0;
 }
 
@@ -48,7 +48,7 @@ static inline void init_func_decl(Node *node) {
     node->data.func_decl.ident = NULL;
     node->data.func_decl.type = make_type(TYPE_NOTYPE);
     node->data.func_decl.args = NULL;
-    node->data.func_decl.args_capacity = 1;
+    node->data.func_decl.args_cap = 1;
     node->data.func_decl.args_len = 0;
     node->data.func_decl.body = NULL;
 }
@@ -63,7 +63,7 @@ static inline void init_call_expr(Node *node) {
     node->data.call_expr.callee = NULL;
     node->data.call_expr.len = 0;
     node->data.call_expr.args = NULL;
-    node->data.call_expr.args_capacity = 1;
+    node->data.call_expr.args_cap = 1;
     node->data.call_expr.args_len = 0;
 }
 
@@ -72,25 +72,25 @@ static inline void init_arg_decl(Node *node) {
     node->data.arg_decl.type = make_type(TYPE_NOTYPE);
 }
 
-static void push_node(Node ***nodes, size_t *capacity, size_t *len, Node *node) {
+static void push_node(Node ***nodes, size_t *cap, size_t *len, Node *node) {
     if (!*nodes) {
         *nodes = (Node **)realloc(*nodes, sizeof(Node *));
         if (!*nodes) error_hypex();
     }
-    if (*len == *capacity) {
-        *capacity *= 2;
-        *nodes = (Node **)realloc(*nodes, *capacity * sizeof(Node *));
+    if (*len == *cap) {
+        *cap *= 2;
+        *nodes = (Node **)realloc(*nodes, *cap * sizeof(Node *));
         if (!*nodes) error_hypex();
     }
     (*nodes)[(*len)++] = node;
 }
 
 static inline void consume_parse(Parser *p, Node *node) {
-    push_node(&(p->expr->data.block.body), &(p->expr->data.block.capacity), &(p->expr->data.block.len), node);
+    push_node(&(p->expr->data.block.body), &(p->expr->data.block.cap), &(p->expr->data.block.len), node);
 }
 
 static inline void consume_func_decl_arg(Node *node, Node *arg) {
-    push_node(&(node->data.func_decl.args), &(node->data.func_decl.args_capacity), &(node->data.func_decl.args_len), arg);
+    push_node(&(node->data.func_decl.args), &(node->data.func_decl.args_cap), &(node->data.func_decl.args_len), arg);
 }
 
 static inline bool is_ignore_token(int kind) {
@@ -187,6 +187,7 @@ static void parse_type(Parser *p, Type *type) {
     const int kind = match_type(p, current(p));
     if (kind != -1) type->kind = kind;
     if (current(p)->kind == T_LPAR) {
+        if (!advance_match(p)) parser_expect(p, "types");
         while (match(p) && current(p)->kind != T_RPAR) {
             advance(p);
         }

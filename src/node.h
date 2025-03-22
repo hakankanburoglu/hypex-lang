@@ -36,7 +36,7 @@ enum {
     OP_POST_INC, // x++
     OP_POST_DEC, // x--
     // BINARY
-    OP_ACCES, // .
+    OP_ACCESS, // .
     OP_ASSIGN, // =
     OP_ADD, // +
     OP_SUB, // -
@@ -88,7 +88,7 @@ enum {
 typedef struct Type {
     int kind;
     struct Type **types;
-    size_t capacity;
+    size_t cap;
     size_t len;
     bool is_const;
     bool is_static;
@@ -105,7 +105,7 @@ typedef struct Node {
     union {
         struct {
             struct Node **body;
-            size_t capacity;
+            size_t cap;
             size_t len;
         } block;
         struct {
@@ -136,7 +136,7 @@ typedef struct Node {
             Token *ident;
             Type *type;
             struct Node **args;
-            size_t args_capacity;
+            size_t args_cap;
             size_t args_len;
             struct Node *body;
         } func_decl;
@@ -149,7 +149,7 @@ typedef struct Node {
             char *callee;
             size_t len;
             struct Node **args;
-            size_t args_capacity;
+            size_t args_cap;
             size_t args_len;
         } call_expr;
         struct {
