@@ -1,12 +1,12 @@
-#include <stdio.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <string.h>
 
-#include "token.h"
+#include "debug.h"
 #include "lexer.h"
 #include "node.h"
 #include "parser.h"
-#include "debug.h"
+#include "token.h"
 
 static inline const char *file_name(const char *file) {
     const char *res = strrchr(file, '/'); // for unix
@@ -82,7 +82,7 @@ void print_token_kind(int kind) {
         case T_SPACE: printf("SPACE"); break;
         case T_INDENT: printf("INDENT"); break;
         case T_DEDENT: printf("DEDENT"); break;
-        case T_EOL: printf("EOL"); break;
+        case T_NEWLINE: printf("NEWLINE"); break;
         default: printf("_T_%d", kind); break;
     }
 }
@@ -148,7 +148,6 @@ void print_token(Token tok) {
     printf("%d:%d ", tok.pos.line, tok.pos.column);
     tok.kind != T_KEYWORD ? print_token_kind(tok.kind) : print_keyword(tok.id);
     if (tok.value) printf(" `%s`", tok.value);
-    if (tok.kind == T_IDENT && tok.begin_uscore) printf(" (begin_uscore)");
     if (tok.kind == T_INTEGER || tok.kind == T_FLOAT) {
         if (tok.num.base != 0) {
             printf(" base:");
@@ -158,9 +157,8 @@ void print_token(Token tok) {
             if (tok.num.is_neg) printf(" (neg_exp)");
             else printf(" (exp)");
         }
-        printf(" num.value:`%s` num.len:%d", tok.num.value, tok.num.len);
     }
-    if (tok.kind == T_EOL && tok.is_comment) printf(" (comment)");
+    if (tok.kind == T_NEWLINE && tok.is_comment) printf(" (comment)");
     if (tok.kind == T_INDENT || tok.kind == T_DEDENT) printf(" level:%d", tok.level);
     printf(" len:%d\n", tok.len);
 }
@@ -168,16 +166,18 @@ void print_token(Token tok) {
 void print_lexer(Lexer lex) {
     for (int i = 0; i < lex.tokens.len; i++)
         print_token(*(lex.tokens.list[i]));
-    printf("\nresults: total=%d ind={", lex.tokens.len);
+    printf("\nresults: total=%d ind=", lex.tokens.len);
     if (lex.indents.stack) {
+        printf("{");
         for (int i = 0; i < lex.indents.len; i++) {
             printf("%d", lex.indents.stack[i]);
             if (i != lex.indents.len - 1) printf(", ");
         }
+        printf("}");
     } else {
         printf("null");
     }
-    printf("}\n\n");
+    printf("\n\n");
 }
 
 void print_node_kind(int kind) {

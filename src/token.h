@@ -1,8 +1,8 @@
 #ifndef TOKEN_H
 #define TOKEN_H
 
-#include <stddef.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 enum {
     T_UNKNOWN,
@@ -75,7 +75,7 @@ enum {
     T_SPACE,
     T_INDENT,
     T_DEDENT,
-    T_EOL
+    T_NEWLINE
 };
 
 enum {
@@ -141,15 +141,11 @@ typedef struct {
     size_t len;
     Pos pos;
     union {
-        //IDENT
-        bool begin_uscore;
         //KEYWORD
         int id;
         //INTEGER, FLOAT
         struct {
             int base;
-            char *value;
-            size_t len;
             bool is_exp;
             bool is_neg;
         } num;
@@ -161,12 +157,6 @@ typedef struct {
 } Token;
 
 Token *make_token(int kind, Pos pos);
-
-void init_number(Token *tok);
-
-void consume_token(Token *tok, char c);
-
-void consume_number(Token *tok, char c);
 
 Token *copy_token(const Token *tok);
 

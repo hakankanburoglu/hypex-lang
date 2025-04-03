@@ -1,12 +1,12 @@
-#include <stdlib.h>
-#include <stddef.h>
-#include <stdbool.h>
 #include <ctype.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 
-#include "token.h"
-#include "lexer.h"
 #include "error.h"
+#include "lexer.h"
+#include "token.h"
 
 #define KWLEN 41
 
@@ -56,13 +56,34 @@ Lexer *init_lexer(const char *input, const char *file) {
     return lex;
 }
 
-static inline void consume_lex(Lexer *lex, Token *tok) {
+static inline void init_number(Token *tok) {
+    tok->num.base = BASE_DEC;
+    tok->num.is_exp = false;
+    tok->num.is_neg = false;
+}
+
+static inline void push_token(Lexer *lex, Token *tok) {
     if (lex->tokens.len == lex->tokens.cap) {
         lex->tokens.cap *= 2;
         lex->tokens.list = (Token **)realloc(lex->tokens.list, sizeof(Token) * lex->tokens.cap);
         if (!lex->tokens.list) error_hypex();
     }
     lex->tokens.list[lex->tokens.len++] = tok;
+}
+
+static void write_token(Token *tok, char c) {
+    if (!tok->value) {
+        tok->cap = 16;
+        tok->value = (char *)realloc(tok->value, sizeof(char) * 17);
+        if (!tok->value) error_hypex();
+    }
+    if (tok->len == tok->cap) {
+        tok->cap *= 2;
+        tok->value = (char *)realloc(tok->value, sizeof(char) * (tok->cap + 1));
+        if (!tok->value) error_hypex();
+    }
+    tok->value[tok->len++] = c;
+    tok->value[tok->len] = '\0';
 }
 
 static inline void push_indent(Lexer *lex, int indent) {
@@ -92,31 +113,31 @@ static inline bool empty_indent(const Lexer *lex) {
     return lex->indents.len == 1;
 }
 
-static inline Token *last_token(const Lexer *lex) {
+static inline Token *peek_token(const Lexer *lex) {
     return lex->tokens.list[lex->tokens.len - 1];
 }
 
-static inline bool match_lex(const Lexer *lex) {
-    return lex->offset < lex->inputlen;
+static inline bool is_eof(const Lexer *lex) {
+    return lex->offset == lex->inputlen;
 }
 
 // overflow warning: input length is not checked in this function
-static inline char current_lex(const Lexer *lex) {
+static inline char current(const Lexer *lex) {
     return lex->input[lex->offset];
 }
 
 // overflow warning: input length is not checked in this function
-static inline void advance_lex(Lexer *lex) {
+static inline void advance(Lexer *lex) {
     lex->offset++;
     lex->pos.column++;
 }
 
 static inline bool is_number(const Lexer *lex) {
-    return isdigit(current_lex(lex));
+    return isdigit(current(lex));
 }
 
 static inline bool is_letter(const Lexer *lex) {
-    return isalpha(current_lex(lex));
+    return isalpha(current(lex));
 }
 
 static inline bool is_exponent(const Token *buf, char c) {
@@ -127,22 +148,17 @@ static inline bool is_exponent(const Token *buf, char c) {
     return false;
 }
 
-static inline bool is_ident_body(const Lexer *lex) {
-    const char c = current_lex(lex);
+static inline bool is_ident(const Lexer *lex) {
+    const char c = current(lex);
     return isalnum(c) || c == '_';
 }
 
-// for platform-dependent line feeds
-static inline bool is_eol(Lexer *lex) {
-    if (current_lex(lex) == '\r') {
-        advance_lex(lex);
-        if (!match_lex(lex))
-            return true;
-        if (current_lex(lex) == '\n') // CRLF
-            return true;
-        return true; // CR
+static inline bool is_newline(Lexer *lex) {
+    if (current(lex) == '\r') {
+        advance(lex);
+        return true;
     }
-    return current_lex(lex) == '\n'; // LF
+    return current(lex) == '\n';
 }
 
 static int match_base(char c) {
@@ -170,30 +186,29 @@ static inline int match_keyword(const char *s) {
 static inline void lex_operator(Lexer *lex, Token *buf, int kind) {
     buf->kind = kind;
     buf->len++;
-    advance_lex(lex);
+    advance(lex);
 }
 
 static inline void lex_digit(Lexer *lex, Token *buf, char c) {
-    consume_number(buf, c);
-    advance_lex(lex);
+    write_token(buf, c);
+    advance(lex);
 }
 
 static void lex_number(Lexer *lex, Token *buf) {
     buf->kind = T_INTEGER;
     init_number(buf);
-    lex_digit(lex, buf, current_lex(lex));
+    lex_digit(lex, buf, current(lex));
     if (buf->value[0] == '0') {
-        const int base = match_base(current_lex(lex));
+        const int base = match_base(current(lex));
         if (base != 0) {
             buf->num.base = base;
-            lex_digit(lex, buf, current_lex(lex));
+            lex_digit(lex, buf, current(lex));
         }
     }
-    while (match_lex(lex)) {
-        const char c = current_lex(lex);
+    while (!is_eof(lex)) {
+        const char c = current(lex);
         if (c == '_') {
-            consume_token(buf, c);
-            advance_lex(lex);
+            advance(lex);
             continue;
         }
         if (buf->num.is_exp) {
@@ -250,17 +265,16 @@ static void lex_number(Lexer *lex, Token *buf) {
     }
     if ( (buf->kind == T_FLOAT && buf->num.base == BASE_HEX && !buf->num.is_exp)
         || (buf->value[buf->len - 1] == '_' || buf->value[buf->len - 1] == '.'))
-        error_number(lex->file, lex->pos.line, lex->pos.column, buf->value);
+        error(lex->file, lex->pos.line, lex->pos.column, "invalid number literal: %s\n", buf->value);
 }
 
-static void lex_ident(Lexer *lex, Token *buf, bool begin_uscore) {
+static void lex_ident(Lexer *lex, Token *buf) {
     buf->kind = T_IDENT;
-    buf->begin_uscore = begin_uscore;
-    consume_token(buf, current_lex(lex));
-    advance_lex(lex);
-    while (match_lex(lex) && is_ident_body(lex)) {
-        consume_token(buf, current_lex(lex));
-        advance_lex(lex);
+    write_token(buf, current(lex));
+    advance(lex);
+    while (is_ident(lex)) {
+        write_token(buf, current(lex));
+        advance(lex);
     }
     const int id = match_keyword(buf->value);
     if (id != -1) {
@@ -276,94 +290,93 @@ static void lex_ident(Lexer *lex, Token *buf, bool begin_uscore) {
     }
 }
 
-static void lex_comment_eol(Lexer *lex, Token *buf) {
-    consume_lex(lex, copy_token(buf));
+static void lex_comment_newline(Lexer *lex, Token *buf) {
+    push_token(lex, copy_token(buf));
     buf->value = NULL;
     buf->len = 0;
-    consume_lex(lex, make_token(T_EOL, lex->pos));
+    push_token(lex, make_token(T_NEWLINE, lex->pos));
     lex->tokens.list[lex->tokens.len - 1]->is_comment = true;
     lex->pos.line++;
     lex->pos.column = 0;
-    advance_lex(lex);
+    advance(lex);
 }
 
 static void lex_comment_line(Lexer *lex, Token *buf) {
     buf->kind = T_COMMENT_LINE;
-    advance_lex(lex);
-    while (match_lex(lex) && !is_eol(lex)) {
-        consume_token(buf, current_lex(lex));
-        advance_lex(lex);
+    advance(lex);
+    while (!is_eof(lex) && !is_newline(lex)) {
+        write_token(buf, current(lex));
+        advance(lex);
     }
 }
 
 static void lex_comment_block(Lexer *lex, Token *buf) {
     buf->kind = T_COMMENT_BLOCK;
-    advance_lex(lex);
-    while (match_lex(lex)) {
-        if (is_eol(lex)) {
-            lex_comment_eol(lex, buf);
-            if (!match_lex(lex)) return;
+    advance(lex);
+    while (!is_eof(lex)) {
+        if (is_newline(lex)) {
+            lex_comment_newline(lex, buf);
+            if (is_eof(lex)) return;
         }
-        if (current_lex(lex) == '*') {
-            advance_lex(lex);
-            if (!match_lex(lex)) return;
-            if (current_lex(lex) == '/') {
-                advance_lex(lex);
+        if (current(lex) == '*') {
+            advance(lex);
+            if (is_eof(lex)) return;
+            if (current(lex) == '/') {
+                advance(lex);
                 return;
             }
-            consume_token(buf, '*');
-            if (is_eol(lex)) {
-                lex_comment_eol(lex, buf);
-                if (!match_lex(lex)) return;
+            write_token(buf, '*');
+            if (is_newline(lex)) {
+                lex_comment_newline(lex, buf);
+                if (is_eof(lex)) return;
             }
         }
-        consume_token(buf, current_lex(lex));
-        advance_lex(lex);
+        write_token(buf, current(lex));
+        advance(lex);
     }
 }
 
-static void lex_literal(Lexer *lex, Token *buf, char sepr) {
+static void lex_literal(Lexer *lex, Token *buf, char delim) {
     bool escape = false;
-    advance_lex(lex);
-    while (match_lex(lex) && (current_lex(lex) != sepr || escape)) {
+    advance(lex);
+    while (!is_eof(lex) && (current(lex) != delim || escape)) {
         if (escape)
             escape = false;
-        if (current_lex(lex) == '\\')
+        if (current(lex) == '\\')
             escape = true;
-        consume_token(buf, current_lex(lex));
-        advance_lex(lex);
+        write_token(buf, current(lex));
+        advance(lex);
     }
-    advance_lex(lex);
+    advance(lex);
 }
 
 static void lex_fstring_body(Lexer *lex, Token *buf) {
     buf->kind = T_FSTRING_BODY;
-    bool escape_fstring = false;
-    bool fstring_end = false;
-    while (match_lex(lex)) {
-        if  (current_lex(lex) == '"' && !escape_fstring) {
+    bool escape = false;
+    bool done = false;
+    while (!is_eof(lex)) {
+        if  (current(lex) == '"' && !escape) {
             lex->fstring_body = false;
-            fstring_end = true;
+            done = true;
             break;
         }
-        if (current_lex(lex) == '{') {
+        if (current(lex) == '{') {
             lex->fstring_body = false;
             lex->fstring_expr = true;
-            advance_lex(lex);
+            advance(lex);
             break;
         }
-        if (escape_fstring)
-            escape_fstring = false;
-        if (current_lex(lex) == '\\')
-            escape_fstring = true;
-        consume_token(buf, current_lex(lex));
-        advance_lex(lex);
+        if (escape)
+            escape = false;
+        if (current(lex) == '\\')
+            escape = true;
+        write_token(buf, current(lex));
+        advance(lex);
     }
-    consume_lex(lex, buf);
-    if (fstring_end) {
-        fstring_end = false;
-        consume_lex(lex, make_token(T_FSTRING_END, lex->pos));
-        advance_lex(lex);
+    push_token(lex, buf);
+    if (done) {
+        push_token(lex, make_token(T_FSTRING_END, lex->pos));
+        advance(lex);
     }
 }
 
@@ -372,12 +385,12 @@ static void lex_rstring(Lexer *lex) {
     last->kind = T_RSTRING;
     last->value = NULL;
     last->len = 0;
-    advance_lex(lex);
-    while (match_lex(lex) && current_lex(lex) != '"') {
-        consume_token(last, current_lex(lex));
-        advance_lex(lex);
+    advance(lex);
+    while (!is_eof(lex) && current(lex) != '"') {
+        write_token(last, current(lex));
+        advance(lex);
     }
-    advance_lex(lex);
+    advance(lex);
 }
 
 static void lex_indent(Lexer *lex, Token *buf) {
@@ -398,7 +411,7 @@ static void lex_indent(Lexer *lex, Token *buf) {
         size_t buflen = buf->len;
         for (int i = lex->indents.len - 1; i >= 0; i--) {
             if (buflen == 0) break;
-            if (buflen < lex->indents.stack[i]) error_indent(lex->file, lex->pos.line, lex->pos.column);
+            if (buflen < lex->indents.stack[i]) error(lex->file, lex->pos.line, lex->pos.column, "invalid indentation\n");
             buflen -= lex->indents.stack[i];
             pop_indent(lex);
             buf->level++;
@@ -407,47 +420,48 @@ static void lex_indent(Lexer *lex, Token *buf) {
     }
 }
 
-static inline void lex_eol(Lexer *lex, Token *buf) {
-    buf->kind = T_EOL;
+static inline void lex_newline(Lexer *lex, Token *buf) {
+    buf->kind = T_NEWLINE;
     buf->is_comment = false;
     lex->newline = true;
-    advance_lex(lex);
+    advance(lex);
 }
 
 static inline void lex_invalid(Lexer *lex) {
-    error_char(lex->file, lex->pos.line, lex->pos.column, current_lex(lex));
-    advance_lex(lex);
+    const char c = current(lex);
+    error(lex->file, lex->pos.line, lex->pos.column, "invalid character: '%c' (0x%x)\n", c, c);
+    advance(lex);
 }
 
 void tokenize(Lexer *lex) {
 
-    while (match_lex(lex)) {
+    while (!is_eof(lex)) {
 
         if (lex->newline) {
             lex->newline = false;
             lex->pos.line++;
             lex->pos.column = 1;
-            if (current_lex(lex) != ' ' && !empty_indent(lex)) {
-                consume_lex(lex, make_token(T_DEDENT, lex->pos));
+            if (current(lex) != ' ' && !empty_indent(lex)) {
+                push_token(lex, make_token(T_DEDENT, lex->pos));
                 lex->tokens.list[lex->tokens.len - 1]->level = -1;
                 clear_indent(lex);
-                advance_lex(lex);
+                advance(lex);
             }
         }
 
         if (lex->potential_fstring) {
             lex->potential_fstring = false;
-            if (current_lex(lex) == '"') {
-                consume_lex(lex, make_token(T_FSTRING_START, lex->pos));
+            if (current(lex) == '"') {
+                push_token(lex, make_token(T_FSTRING_START, lex->pos));
                 lex->fstring_body = true;
-                advance_lex(lex);
+                advance(lex);
                 continue;
             }
         }
 
         if (lex->potential_rstring) {
             lex->potential_rstring = false;
-            if (current_lex(lex) == '"') {
+            if (current(lex) == '"') {
                 lex_rstring(lex);
                 continue;
             }
@@ -455,10 +469,10 @@ void tokenize(Lexer *lex) {
 
         Token *buf = make_token(T_UNKNOWN, lex->pos);
 
-        if (lex->fstring_expr && current_lex(lex) == '}') {
+        if (lex->fstring_expr && current(lex) == '}') {
             lex->fstring_expr = false;
             lex->fstring_body = true;
-            advance_lex(lex);
+            advance(lex);
             continue;
         }
 
@@ -467,130 +481,116 @@ void tokenize(Lexer *lex) {
             continue;
         }
 
-        switch (current_lex(lex)) {
+        switch (current(lex)) {
             case '=':
                 lex_operator(lex, buf, T_EQUAL);
-                if (match_lex(lex) && current_lex(lex) == '=')
+                if (current(lex) == '=')
                     lex_operator(lex, buf, T_TWO_EQ);
                 break;
             case '+':
                 lex_operator(lex, buf, T_PLUS);
-                if (match_lex(lex)) {
-                    switch (current_lex(lex)) {
-                        case '=':
-                            lex_operator(lex, buf, T_PLUS_EQ);
-                            break;
-                        case '+':
-                            lex_operator(lex, buf, T_INCREASE);
-                            break;
-                    }
+                switch (current(lex)) {
+                    case '=':
+                        lex_operator(lex, buf, T_PLUS_EQ);
+                        break;
+                    case '+':
+                        lex_operator(lex, buf, T_INCREASE);
+                        break;
                 }
                 break;
             case '-':
                 lex_operator(lex, buf, T_MINUS);
-                if (match_lex(lex)) {
-                    switch (current_lex(lex)) {
-                        case '=':
-                            lex_operator(lex, buf, T_MINUS_EQ);
-                            break;
-                        case '-':
-                            lex_operator(lex, buf, T_DECREASE);
-                            break;
-                    }
+                switch (current(lex)) {
+                    case '=':
+                        lex_operator(lex, buf, T_MINUS_EQ);
+                        break;
+                    case '-':
+                        lex_operator(lex, buf, T_DECREASE);
+                        break;
                 }
                 break;
             case '*':
                 lex_operator(lex, buf, T_STAR);
-                if (match_lex(lex) && current_lex(lex) == '=')
+                if (current(lex) == '=')
                     lex_operator(lex, buf, T_STAR_EQ);
                 break;
             case '/':
                 lex_operator(lex, buf, T_SLASH);
-                if (match_lex(lex)) {
-                    switch (current_lex(lex)) {
-                        case '=':
-                            lex_operator(lex, buf, T_SLASH_EQ);
-                            break;
-                        case '/':
-                            lex_comment_line(lex, buf);
-                            break;
-                        case '*':
-                            lex_comment_block(lex, buf);
-                            break;
-                    }
+                switch (current(lex)) {
+                    case '=':
+                        lex_operator(lex, buf, T_SLASH_EQ);
+                        break;
+                    case '/':
+                        lex_comment_line(lex, buf);
+                        break;
+                    case '*':
+                        lex_comment_block(lex, buf);
+                        break;
                 }
                 break;
             case '<':
                 lex_operator(lex, buf, T_LESS);
-                if (match_lex(lex)) {
-                    switch (current_lex(lex)) {
-                        case '=':
-                            lex_operator(lex, buf, T_LESS_EQ);
-                            break;
-                        case '<':
-                            lex_operator(lex, buf, T_LSHIFT);
-                            if (match_lex(lex) && current_lex(lex) == '=')
-                                lex_operator(lex, buf, T_LSHIFT_EQ);
-                            break;
-                    }
+                switch (current(lex)) {
+                    case '=':
+                        lex_operator(lex, buf, T_LESS_EQ);
+                        break;
+                    case '<':
+                        lex_operator(lex, buf, T_LSHIFT);
+                        if (current(lex) == '=')
+                            lex_operator(lex, buf, T_LSHIFT_EQ);
+                        break;
                 }
                 break;
             case '>':
                 lex_operator(lex, buf, T_GREATER);
-                if (match_lex(lex)) {
-                    switch (current_lex(lex)) {
-                        case '=':
-                            lex_operator(lex, buf, T_GREATER_EQ);
-                            break;
-                        case '>':
-                            lex_operator(lex, buf, T_RSHIFT);
-                            if (match_lex(lex) && current_lex(lex) == '=')
-                                lex_operator(lex, buf, T_RSHIFT_EQ);
-                            break;
-                    }
+                switch (current(lex)) {
+                    case '=':
+                        lex_operator(lex, buf, T_GREATER_EQ);
+                        break;
+                    case '>':
+                        lex_operator(lex, buf, T_RSHIFT);
+                        if (current(lex) == '=')
+                            lex_operator(lex, buf, T_RSHIFT_EQ);
+                        break;
                 }
                 break;
             case '&':
                 lex_operator(lex, buf, T_AMPER);
-                if (match_lex(lex)) {
-                    switch (current_lex(lex)) {
-                        case '=':
-                            lex_operator(lex, buf, T_AMPER_EQ);
-                            break;
-                        case '&':
-                            lex_operator(lex, buf, T_TWO_AMPER);
-                            break;
-                    }
+                switch (current(lex)) {
+                    case '=':
+                        lex_operator(lex, buf, T_AMPER_EQ);
+                        break;
+                    case '&':
+                        lex_operator(lex, buf, T_TWO_AMPER);
+                        break;
                 }
                 break;
             case '|':
                 lex_operator(lex, buf, T_PIPE);
-                if (match_lex(lex)) {
-                    switch (current_lex(lex)) {
-                        case '=':
-                            lex_operator(lex, buf, T_PIPE_EQ);
-                            break;
-                        case '|':
-                            lex_operator(lex, buf, T_TWO_PIPE);
-                            break;
-                    }
+                switch (current(lex)) {
+                    case '=':
+                        lex_operator(lex, buf, T_PIPE_EQ);
+                        break;
+                    case '|':
+                        lex_operator(lex, buf, T_TWO_PIPE);
+                        break;
                 }
                 break;
             case '!':
                 lex_operator(lex, buf, T_EXCLAMATION);
-                if (match_lex(lex) && current_lex(lex) == '=')
+                if (current(lex) == '=')
                     lex_operator(lex, buf, T_EXCLAMATION_EQ);
                 break;
             case '%':
                 lex_operator(lex, buf, T_PERCENT);
-                if (match_lex(lex) && current_lex(lex) == '=')
+                if (current(lex) == '=')
                     lex_operator(lex, buf, T_PERCENT_EQ);
                 break;
             case '.':
                 lex_operator(lex, buf, T_DOT);
-                if (match_lex(lex) && current_lex(lex) == '.') {
+                if (current(lex) == '.') {
                     lex_operator(lex, buf, T_TWO_DOT);
-                    if (match_lex(lex) && current_lex(lex) == '.')
+                    if (current(lex) == '.')
                         lex_operator(lex, buf, T_ELLIPSIS);
                 }
                 break;
@@ -605,9 +605,9 @@ void tokenize(Lexer *lex) {
                 break;
             case '_':
                 lex_operator(lex, buf, T_UNDERSCORE);
-                if (match_lex(lex) && is_ident_body(lex)) {
-                    consume_token(buf, '_');
-                    lex_ident(lex, buf, 1);
+                if (is_ident(lex)) {
+                    write_token(buf, '_');
+                    lex_ident(lex, buf);
                 }
                 break;
             case '?':
@@ -633,7 +633,7 @@ void tokenize(Lexer *lex) {
                 break;
             case '^':
                 lex_operator(lex, buf, T_CARET);
-                if (match_lex(lex) && current_lex(lex) == '=')
+                if (current(lex) == '=')
                     lex_operator(lex, buf, T_CARET_EQ);
                 break;
             case '~':
@@ -650,11 +650,11 @@ void tokenize(Lexer *lex) {
                 break;
             case ' ':
                 lex_operator(lex, buf, T_SPACE);
-                while (match_lex(lex) && current_lex(lex) == ' ') {
+                while (current(lex) == ' ') {
                     buf->len++;
-                    advance_lex(lex);
+                    advance(lex);
                 }
-                if (last_token(lex)->kind == T_EOL)
+                if (peek_token(lex)->kind == T_NEWLINE)
                     lex_indent(lex, buf);
                 break;
             case '\'':
@@ -666,17 +666,17 @@ void tokenize(Lexer *lex) {
                 lex_literal(lex, buf, '"');
                 break;
             default:
-                if (is_eol(lex))
-                    lex_eol(lex, buf);
+                if (is_newline(lex))
+                    lex_newline(lex, buf);
                 else if (is_number(lex))
                     lex_number(lex, buf);
                 else if (is_letter(lex))
-                    lex_ident(lex, buf, false);
+                    lex_ident(lex, buf);
                 else
                     lex_invalid(lex);
                 break;
         }
-        consume_lex(lex, buf);
+        push_token(lex, buf);
     }
 }
 
