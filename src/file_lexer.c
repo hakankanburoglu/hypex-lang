@@ -1,19 +1,19 @@
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stddef.h>
 
-#include "lexer.h"
-#include "file_lexer.h"
 #include "error.h"
+#include "file_lexer.h"
+#include "lexer.h"
 
 void lex_file(Lexer *lex) {
     FILE *file = fopen(lex->file, "r");
-    if (!file) error_file(lex->file);
+    if (!file) fatal_error("no such file or directory: %s\n", lex->file);
     fseek(file, 0, SEEK_END);
     size_t filelen = ftell(file);
     if (filelen == -1L) {
         fclose(file);
-        error_file_proc(lex->file);
+        fatal_error("file processing error: %s\n", lex->file);
     }
     rewind(file);
     lex->input = (char *)realloc(lex->input, sizeof(char) * (filelen + 1));
@@ -27,7 +27,8 @@ void lex_file(Lexer *lex) {
             lex->input[readlen] = '\0';
             lex->inputlen = readlen;
         } else {
-            error_file_read(lex->file); 
+            fclose(file);
+            fatal_error("file could not be read completely: %s\n", lex->file);
         }
         fclose(file);
         return;
