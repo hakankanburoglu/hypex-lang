@@ -158,7 +158,7 @@ void print_token(Token tok) {
             else printf(" (exp)");
         }
     }
-    if (tok.kind == T_NEWLINE && tok.is_comment) printf(" (comment)");
+    if (tok.kind == T_NEWLINE && tok.comment) printf(" (comment)");
     if (tok.kind == T_INDENT || tok.kind == T_DEDENT) printf(" level:%d", tok.level);
     printf(" len:%d\n", tok.len);
 }

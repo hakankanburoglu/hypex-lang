@@ -141,18 +141,18 @@ typedef struct {
     size_t len;
     Pos pos;
     union {
-        //KEYWORD
+        // KEYWORD
         int id;
-        //INTEGER, FLOAT
+        // INTEGER, FLOAT
         struct {
             int base;
             bool is_exp;
             bool is_neg;
         } num;
-        //_INDENT, _DEDENT
+        // _INDENT, _DEDENT
         int level;
-        //EOL
-        bool is_comment;
+        // NEWLINE
+        bool comment;
     };
 } Token;
 
