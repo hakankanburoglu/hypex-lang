@@ -146,7 +146,7 @@ static inline bool is_letter(const Lexer *lex) {
 static inline bool is_exponent(const Token *buf, char c) {
     if (!buf->num.is_exp) {
         if (buf->num.base == BASE_DEC && (c == 'e' || c == 'E')) return true;
-        if (buf->num.base == BASE_HEX && (c == 'p' || c == 'P')) return true;
+        return buf->num.base == BASE_HEX && (c == 'p' || c == 'P');
     }
     return false;
 }
@@ -176,12 +176,12 @@ static int match_base(char c) {
     }
 }
 
-static inline int compare_keywords(const void *s1, const void *s2) {
+static inline int compare_keyword(const void *s1, const void *s2) {
     return strcmp(*(const char **)s1, *(const char **)s2);
 }
 
 static inline int match_keyword(const char *s) {
-    const char **res = (const char **)bsearch(&s, KWLIST, KWLEN, sizeof(KWLIST[0]), compare_keywords);
+    const char **res = (const char **)bsearch(&s, KWLIST, KWLEN, sizeof(KWLIST[0]), compare_keyword);
     return res ? (int)(res - KWLIST) : -1;
 }
 
