@@ -22,6 +22,7 @@ void lex_file(Lexer *lex) {
         error_hypex();
     }
     size_t readlen = fread(lex->input, 1, filelen, file);
+    lex->cur = lex->input[0];
     if (readlen < filelen) {
         if (feof(file)) {
             lex->input[readlen] = '\0';
