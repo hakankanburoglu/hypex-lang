@@ -26,13 +26,23 @@ Token *copy_token(const Token *tok) {
     }
     r->cap = tok->cap;
     r->len = tok->len;
-    if (r->kind == T_KEYWORD) {
-        r->id = tok->id;
-    }
-    if (r->kind == T_INTEGER || r->kind == T_FLOAT) {
-        r->num.base = tok->num.base;
-        r->num.is_exp = tok->num.is_exp;
-        r->num.is_neg = tok->num.is_neg;
+    switch (r->kind) {
+        case T_KEYWORD:
+            r->id = tok->id;
+            break;
+        case T_INTEGER: case T_FLOAT:
+            r->num.base = tok->num.base;
+            r->num.is_exp = tok->num.is_exp;
+            r->num.is_neg = tok->num.is_neg;
+            break;
+        case T_INDENT: case T_DEDENT:
+            r->level = tok->level;
+            break;
+        case T_NEWLINE:
+            r->comment = tok->comment;
+            break;
+        default:
+            break;
     }
     return r;
 }
