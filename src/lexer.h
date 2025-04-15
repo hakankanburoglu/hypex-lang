@@ -20,9 +20,10 @@ typedef struct {
         size_t cap;
         size_t len;
     } indents;
-    int indent;
     int offset;
     Pos pos;
+    char cur;
+    int indent;
     bool newline;
     bool potential_fstring;
     bool potential_rstring;
