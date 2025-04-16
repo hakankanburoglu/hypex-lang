@@ -18,6 +18,15 @@ const char *KWLIST[KWLEN] = {
     "switch", "throw", "true", "try", "uint", "ulong", "use", "ushort", "var", "while", "yield"
 };
 
+enum {
+    STATE_NONE,
+    STATE_NEWL,
+    STATE_BEGIN_F,
+    STATE_BEGIN_R,
+    STATE_F_BODY,
+    STATE_F_EXPR
+};
+
 Lexer *init_lexer(const char *input, const char *file) {
     Lexer *lex = (Lexer *)malloc(sizeof(Lexer));
     if (!lex) error_hypex();
@@ -49,12 +58,8 @@ Lexer *init_lexer(const char *input, const char *file) {
     lex->offset = 0;
     lex->pos = (Pos){1, 1};
     lex->cur = lex->input ? lex->input[0] : '\0';
+    lex->state = STATE_NONE;
     lex->indent = 0;
-    lex->newline = false;
-    lex->potential_fstring = false;
-    lex->potential_rstring = false;
-    lex->fstring_body = false;
-    lex->fstring_expr = false;
     return lex;
 }
 
@@ -285,9 +290,9 @@ static void lex_ident(Lexer *lex, Token *buf) {
         buf->id = id;
     } else {
         if (strcmp(buf->value, "f") == 0)
-            lex->potential_fstring = true;
+            lex->state = STATE_BEGIN_F;
         if (strcmp(buf->value, "r") == 0)
-            lex->potential_rstring = true;
+            lex->state = STATE_BEGIN_R;
     }
 }
 
@@ -357,13 +362,12 @@ static void lex_fstring_body(Lexer *lex, Token *buf) {
     bool done = false;
     while (has_next(lex)) {
         if  (lex->cur == '"' && !escape) {
-            lex->fstring_body = false;
+            lex->state = STATE_NONE;
             done = true;
             break;
         }
         if (lex->cur == '{') {
-            lex->fstring_body = false;
-            lex->fstring_expr = true;
+            lex->state = STATE_F_EXPR;
             next(lex);
             break;
         }
@@ -424,7 +428,7 @@ static void lex_indent(Lexer *lex, Token *buf) {
 static inline void lex_newline(Lexer *lex, Token *buf) {
     buf->kind = T_NEWLINE;
     buf->comment = false;
-    lex->newline = true;
+    lex->state = STATE_NEWL;
     next(lex);
 }
 
@@ -435,8 +439,8 @@ static inline void lex_invalid(Lexer *lex) {
 
 void tokenize(Lexer *lex) {
     while (has_next(lex)) {
-        if (lex->newline) {
-            lex->newline = false;
+        if (lex->state == STATE_NEWL) {
+            lex->state == STATE_NONE;
             lex->pos.line++;
             lex->pos.column = 1;
             if (lex->cur != ' ' && !empty_indent(lex)) {
@@ -446,30 +450,29 @@ void tokenize(Lexer *lex) {
                 next(lex);
             }
         }
-        if (lex->potential_fstring) {
-            lex->potential_fstring = false;
+        if (lex->state == STATE_BEGIN_F) {
+            lex->state = STATE_NONE;
             if (lex->cur == '"') {
                 push_token(lex, make_token(T_FSTRING_START, lex->pos));
-                lex->fstring_body = true;
+                lex->state = STATE_F_BODY;
                 next(lex);
                 continue;
             }
         }
-        if (lex->potential_rstring) {
-            lex->potential_rstring = false;
+        if (lex->state == STATE_BEGIN_R) {
+            lex->state = STATE_NONE;
             if (lex->cur == '"') {
                 lex_rstring(lex);
                 continue;
             }
         }
         Token *buf = make_token(T_UNKNOWN, lex->pos);
-        if (lex->fstring_expr && lex->cur == '}') {
-            lex->fstring_expr = false;
-            lex->fstring_body = true;
+        if (lex->state == STATE_F_EXPR && lex->cur == '}') {
+            lex->state = STATE_F_BODY;
             next(lex);
             continue;
         }
-        if (lex->fstring_body) {
+        if (lex->state == STATE_F_BODY) {
             lex_fstring_body(lex, buf);
             continue;
         }

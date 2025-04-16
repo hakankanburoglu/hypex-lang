@@ -23,12 +23,8 @@ typedef struct {
     int offset;
     Pos pos;
     char cur;
+    int state;
     int indent;
-    bool newline;
-    bool potential_fstring;
-    bool potential_rstring;
-    bool fstring_body;
-    bool fstring_expr;
 } Lexer;
 
 Lexer *init_lexer(const char *input, const char *file);
