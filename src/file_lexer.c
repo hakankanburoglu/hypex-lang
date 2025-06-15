@@ -8,12 +8,12 @@
 
 void lex_file(Lexer *lex) {
     FILE *file = fopen(lex->file, "r");
-    if (!file) fatal_error("no such file or directory: %s\n", lex->file);
+    if (!file) fatal_error("no such file or directory: %s", lex->file);
     fseek(file, 0, SEEK_END);
     size_t filelen = ftell(file);
     if (filelen == -1L) {
         fclose(file);
-        fatal_error("file processing error: %s\n", lex->file);
+        fatal_error("file processing error: %s", lex->file);
     }
     rewind(file);
     lex->input = (char *)realloc(lex->input, sizeof(char) * (filelen + 1));
@@ -29,7 +29,7 @@ void lex_file(Lexer *lex) {
             lex->inputlen = readlen;
         } else {
             fclose(file);
-            fatal_error("file could not be read completely: %s\n", lex->file);
+            fatal_error("file could not be read completely: %s", lex->file);
         }
         fclose(file);
         return;

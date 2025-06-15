@@ -269,9 +269,9 @@ static void lex_number(Lexer *lex, Token *tok) {
         }
         break;
     }
-        error_lexer(lex, "invalid number literal: %s\n", buf->value);
     if ( (tok->kind == T_FLOAT && tok->num.base == BASE_HEX && !tok->num.is_exp)
         || (tok->value[tok->len - 1] == '_' || tok->value[tok->len - 1] == '.'))
+        error_lexer(lex, "invalid number literal: %s", tok->value);
 }
 
 static void lex_ident(Lexer *lex, Token *tok) {
@@ -420,7 +420,7 @@ static inline void lex_newline(Lexer *lex, Token *tok) {
 }
 
 static inline void lex_invalid(Lexer *lex) {
-    error_lexer(lex, "invalid character: '%c' (0x%x)\n", lex->cur, lex->cur);
+    error_lexer(lex, "invalid character: '%c' (0x%x)", lex->cur, lex->cur);
     next(lex);
 }
 
