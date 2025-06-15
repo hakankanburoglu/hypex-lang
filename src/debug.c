@@ -190,7 +190,6 @@ void print_node_kind(int kind) {
         case NODE_TERNARY_OP: printf("ternary_op"); break;
         case NODE_LITERAL: printf("literal"); break;
         case NODE_IDENT: printf("ident"); break;
-        case NODE_LOGIC_EXPR: printf("logic_expr"); break;
         case NODE_PAREN_GROUP: printf("paren_group"); break;
         case NODE_FUNC_DECL: printf("func_decl"); break;
         case NODE_ARG_DECL: printf("arg_decl"); break;
@@ -218,6 +217,11 @@ void print_op(int op) {
         case OP_MUL: printf("mul"); break;
         case OP_DIV: printf("div"); break;
         case OP_MOD: printf("mod"); break;
+        case OP_A_ADD: printf("a_add"); break;
+        case OP_A_SUB: printf("a_sub"); break;
+        case OP_A_MUL: printf("a_mul"); break;
+        case OP_A_DIV: printf("a_div"); break;
+        case OP_A_MOD: printf("a_mod"); break;
         case OP_EQ: printf("eq"); break;
         case OP_NE: printf("ne"); break;
         case OP_LT: printf("lt"); break;
@@ -231,8 +235,12 @@ void print_op(int op) {
         case OP_XOR: printf("xor"); break;
         case OP_SHL: printf("shl"); break;
         case OP_SHR: printf("shr"); break;
-        case OP_SLE: printf("sle"); break;
-        case OP_SRE: printf("sre"); break;
+        case OP_A_AND: printf("a_and"); break;
+        case OP_A_OR: printf("a_or"); break;
+        case OP_A_XOR: printf("a_xor"); break;
+        case OP_A_SHL: printf("a_shl"); break;
+        case OP_A_SHR: printf("a_shr"); break;
+        case OP_COND: printf("cond"); break;
         default: printf("_op_%d", op); break;
     }
 }
@@ -270,103 +278,106 @@ static inline void print_indent(int level) {
         printf("    ");
 }
 
-void print_type(Type type) {
+static inline int has_flags(Type *type, int flags) {
+    return (type->flags & flags) == flags;
+}
+
+void print_type(Type *type) {
+    if (!type) {
+        printf("null");
+        return;
+    }
     printf("<");
-    if (type.is_const) printf("const ");
-    if (type.is_static) printf("static ");
-    if (type.is_private) printf("private ");
-    if (type.is_protected) printf("protected ");
-    if (type.is_by_ref) printf("ref ");
-    print_type_kind(type.kind);
-    if (type.types) {
+    if (has_flags(type, FLAG_CONST)) printf("const ");
+    if (has_flags(type, FLAG_STAT)) printf("stat ");
+    if (has_flags(type, FLAG_PRIV)) printf("priv ");
+    if (has_flags(type, FLAG_PROT)) printf("prot ");
+    if (has_flags(type, FLAG_REF)) printf("ref ");
+    print_type_kind(type->kind);
+    if (type->types) {
         printf(" ");
-        for (int i = 0; i < type.len; i++)
-            print_type(*(type.types[i]));
+        for (int i = 0; i < type->len; i++)
+            print_type(type->types[i]);
     }
     printf(">");
 }
 
-void print_node(Node node, int level, const char *tag) {
+void print_node(Node *node, int level, const char *tag) {
     print_indent(level);
     if (tag) printf("%s: ", tag);
-    print_node_kind(node.kind);
+    if (!node) {
+        printf("null");
+        return;
+    }
+    print_node_kind(node->kind);
     printf(":");
-    switch (node.kind) {
+    switch (node->kind) {
         case NODE_SOURCE: case NODE_BLOCK:
             printf("\n");
-            for (int i = 0; i < node.data.block.len; i++)
-                print_node(*(node.data.block.body[i]), level + 1, NULL);
+            for (int i = 0; i < node->data.block.len; i++)
+                print_node(node->data.block.body[i], level + 1, NULL);
+            break;
+        case NODE_EXPR: case NODE_RET_STMT:
+            printf("\n");
+            print_node(node->data.expr, level + 1, "expr");
             break;
         case NODE_UNARY_OP:
-            printf(", op=");
-            print_op(node.data.unary_op.op);
+            printf(" op=");
+            print_op(node->data.unary_op.op);
             printf(", prefix=");
-            node.data.unary_op.prefix ? printf("true") : printf("false");
+            node->data.unary_op.prefix ? printf("true") : printf("false");
             printf("\n");
-            print_node(*(node.data.unary_op.operand), level + 1, "operand");
+            print_node(node->data.unary_op.operand, level + 1, "operand");
             break;
         case NODE_BINARY_OP:
-            printf(", op=");
-            print_op(node.data.binary_op.op);
+            printf(" op=");
+            print_op(node->data.binary_op.op);
             printf("\n");
-            print_node(*(node.data.binary_op.left), level + 1, "left");
-            print_node(*(node.data.binary_op.right), level + 1, "right");
+            print_node(node->data.binary_op.left, level + 1, "left");
+            print_node(node->data.binary_op.right, level + 1, "right");
             break;
         case NODE_TERNARY_OP:
             printf("\n");
-            print_node(*(node.data.ternary_op.cond), level + 1, "cond");
-            print_node(*(node.data.ternary_op.if_body), level + 1, "if");
-            print_node(*(node.data.ternary_op.else_body), level + 1, "else");
+            print_node(node->data.ternary_op.cond, level + 1, "cond");
+            print_node(node->data.ternary_op.if_body, level + 1, "if");
+            print_node(node->data.ternary_op.else_body, level + 1, "else");
             break;
-        case NODE_LITERAL:
-            printf(" value=\"%s\"", node.data.literal.value->value);
-            break;
-        case NODE_IDENT:
-            printf(" value=`%s`", node.data.ident.value->value);
+        case NODE_LITERAL: case NODE_IDENT:
+            printf(" value=\"%s\"\n", node->data.value->value);
             break;
         case NODE_FUNC_DECL:
-            printf(" name=`%s` type=", node.data.func_decl.ident->value);
-            node.data.func_decl.type ? print_type(*(node.data.func_decl.type)) : printf("null");
+            printf(" ident=`%s` type=", node->data.func_decl.ident->value);
+            print_type(node->data.func_decl.type);
             printf("\n");
-            if (node.data.func_decl.args_len > 0) {
+            if (node->data.func_decl.args_len > 0) {
                 print_indent(level + 1);
                 printf("args:\n");
-                for (int i = 0; i < node.data.func_decl.args_len; i++)
-                    print_node(*(node.data.func_decl.args[i]), level + 2, NULL);
+                for (int i = 0; i < node->data.func_decl.args_len; i++) {
+                    print_node(node->data.func_decl.args[i], level + 2, NULL);
+                    printf("\n");
+                }
             }
-            if (node.data.func_decl.body) { 
-                print_node(*(node.data.func_decl.body), level + 1, "body");
-            } else {
-                print_indent(level + 1);
-                printf("body: null");
-            }
+            print_node(node->data.func_decl.body, level + 1, "body");
             break;
-        case NODE_VAR_DECL:
-            printf(" ident=`%s` type=", node.data.var_decl.ident->value);
-            node.data.var_decl.type ? print_type(*(node.data.var_decl.type)) : printf("null");
+        case NODE_VAR_DECL: case NODE_ARG_DECL:
+            printf(" ident=`%s` type=", node->data.var_decl.ident->value);
+            print_type(node->data.var_decl.type);
             printf("\n");
-            if (node.data.var_decl.init) {
-                print_node(*(node.data.var_decl.init), level + 1, "init");
-            } else {
-                print_indent(level + 1);
-                printf("init: null");
-            }
+            print_node(node->data.var_decl.init, level + 1, "init");
             break;
         case NODE_CALL_EXPR:
-            printf(" callee=`%s`\n", node.data.call_expr.callee);
-            for (int i = 0; i < node.data.call_expr.args_len; i++)
-                print_node(*(node.data.call_expr.args[i]), level + 1, "arg");
-            break;
-        case NODE_ARG_DECL:
-            printf(" ident=`%s` type=", node.data.arg_decl.ident->value);
-            node.data.arg_decl.type ? print_type(*(node.data.arg_decl.type)) : printf("null");
+            printf(" callee=`%s`\n", node->data.call_expr.callee);
+            for (int i = 0; i < node->data.call_expr.args_len; i++) {
+                print_node(node->data.call_expr.args[i], level + 1, "arg");
+                printf("\n");
+            }
             break;
         default:
             break;
     }
-    printf("\n");
+    if (level == 0) printf("\n");
 }
 
 void print_parser(Parser p) {
-    p.expr ? print_node(*(p.expr), 0, NULL) : printf("null expr");
+    p.expr ? print_node(p.expr, 0, NULL) : printf("null expr");
 }
