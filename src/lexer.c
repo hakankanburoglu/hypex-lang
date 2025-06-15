@@ -338,6 +338,8 @@ static void lex_literal(Lexer *lex, Token *tok, char delim) {
     bool escape = false;
     next(lex);
     while (has_next(lex) && (lex->cur != delim || escape)) {
+        if (!escape && lex->cur == '\n')
+            delim == '"' ? error_lexer(lex, "expected '\"'") : error_lexer(lex, "expected \"'\"");
         if (escape)
             escape = false;
         if (lex->cur == '\\')
