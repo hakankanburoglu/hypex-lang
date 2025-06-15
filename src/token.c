@@ -26,6 +26,7 @@ Token *copy_token(const Token *tok) {
     }
     r->cap = tok->cap;
     r->len = tok->len;
+    r->pos = tok->pos;
     switch (r->kind) {
         case T_KEYWORD:
             r->id = tok->id;
