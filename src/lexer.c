@@ -133,6 +133,11 @@ static inline void next(Lexer *lex) {
     lex->pos.column++;
 }
 
+static inline void consume(Lexer *lex, Token *tok) {
+    write_token(tok, lex->cur);
+    next(lex);
+}
+
 static inline void error_lexer(const Lexer *lex, const char *format, ...) {
     va_list args;
     va_start(args, format);
@@ -196,10 +201,6 @@ static inline void lex_operator(Lexer *lex, Token *buf, int kind) {
     next(lex);
 }
 
-static inline void lex_digit(Lexer *lex, Token *buf, char c) {
-    write_token(buf, c);
-    next(lex);
-}
 
 static void lex_number(Lexer *lex, Token *buf) {
     buf->kind = T_INTEGER;
