@@ -22,9 +22,9 @@ void print_op(int op);
 
 void print_type_kind(int kind);
 
-void print_type(Type type);
+void print_type(Type *type);
 
-void print_node(Node node, int level, const char *tag);
+void print_node(Node *node, int level, const char *tag);
 
 void print_parser(Parser p);
 
