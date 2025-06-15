@@ -153,10 +153,10 @@ static inline bool is_letter(const Lexer *lex) {
     return isalpha(lex->cur);
 }
 
-static inline bool is_exponent(const Token *buf, char c) {
-    if (!buf->num.is_exp) {
-        if (buf->num.base == BASE_DEC && (c == 'e' || c == 'E')) return true;
-        return buf->num.base == BASE_HEX && (c == 'p' || c == 'P');
+static inline bool is_exponent(const Token *tok, char c) {
+    if (!tok->num.is_exp) {
+        if (tok->num.base == BASE_DEC && (c == 'e' || c == 'E')) return true;
+        return tok->num.base == BASE_HEX && (c == 'p' || c == 'P');
     }
     return false;
 }
@@ -195,22 +195,21 @@ static inline int match_keyword(const char *s) {
     return res ? (int)(res - KWLIST) : -1;
 }
 
-static inline void lex_operator(Lexer *lex, Token *buf, int kind) {
-    buf->kind = kind;
-    buf->len++;
+static inline void lex_operator(Lexer *lex, Token *tok, int kind) {
+    tok->kind = kind;
+    tok->len++;
     next(lex);
 }
 
-
-static void lex_number(Lexer *lex, Token *buf) {
-    buf->kind = T_INTEGER;
-    init_number(buf);
-    lex_digit(lex, buf, lex->cur);
-    if (buf->value[0] == '0') {
+static void lex_number(Lexer *lex, Token *tok) {
+    tok->kind = T_INTEGER;
+    init_number(tok);
+    consume(lex, tok);
+    if (tok->value[0] == '0') {
         const int base = match_base(lex->cur);
         if (base != 0) {
-            buf->num.base = base;
-            lex_digit(lex, buf, lex->cur);
+            tok->num.base = base;
+            consume(lex, tok);
         }
     }
     while (has_next(lex)) {
@@ -218,49 +217,49 @@ static void lex_number(Lexer *lex, Token *buf) {
             next(lex);
             continue;
         }
-        if (buf->num.is_exp) {
+        if (tok->num.is_exp) {
             if (isdigit(lex->cur)) {
-                lex_digit(lex, buf, lex->cur);
+                consume(lex, tok);
                 continue;
             }
-            if (!buf->num.is_neg && lex->cur == '-') {
-                buf->num.is_neg = true;
-                lex_digit(lex, buf, lex->cur);
+            if (!tok->num.is_neg && lex->cur == '-') {
+                tok->num.is_neg = true;
+                consume(lex, tok);
                 continue;
             }
         }
-        if (buf->kind != T_FLOAT && lex->cur == '.') {
-            buf->kind = T_FLOAT;
-            lex_digit(lex, buf, lex->cur);
+        if (tok->kind != T_FLOAT && lex->cur == '.') {
+            tok->kind = T_FLOAT;
+            consume(lex, tok);
             continue;
         }
-        if (is_exponent(buf, lex->cur)) {
-            buf->num.is_exp = true;
-            lex_digit(lex, buf, lex->cur);
+        if (is_exponent(tok, lex->cur)) {
+            tok->num.is_exp = true;
+            consume(lex, tok);
             continue;
         }
-        switch (buf->num.base) {
+        switch (tok->num.base) {
             case BASE_DEC:
                 if (isdigit(lex->cur)) {
-                    lex_digit(lex, buf, lex->cur);
+                    consume(lex, tok);
                     continue;
                 }
                 break;
             case BASE_HEX:
                 if (isxdigit(lex->cur)) {
-                    lex_digit(lex, buf, lex->cur);
+                    consume(lex, tok);
                     continue;
                 }
                 break;
             case BASE_OCT:
                 if (lex->cur >= '0' && lex->cur <= '7') {
-                    lex_digit(lex, buf, lex->cur);
+                    consume(lex, tok);
                     continue;
                 }
                 break;
             case BASE_BIN:
                 if (lex->cur == '0' || lex->cur == '1') {
-                    lex_digit(lex, buf, lex->cur);
+                    consume(lex, tok);
                     continue;
                 }
                 break;
@@ -270,37 +269,33 @@ static void lex_number(Lexer *lex, Token *buf) {
         }
         break;
     }
-    if ( (buf->kind == T_FLOAT && buf->num.base == BASE_HEX && !buf->num.is_exp)
-        || (buf->value[buf->len - 1] == '_' || buf->value[buf->len - 1] == '.'))
         error_lexer(lex, "invalid number literal: %s\n", buf->value);
+    if ( (tok->kind == T_FLOAT && tok->num.base == BASE_HEX && !tok->num.is_exp)
+        || (tok->value[tok->len - 1] == '_' || tok->value[tok->len - 1] == '.'))
 }
 
-static void lex_ident(Lexer *lex, Token *buf) {
-    buf->kind = T_IDENT;
-    write_token(buf, lex->cur);
-    next(lex);
-    while (is_ident(lex)) {
-        write_token(buf, lex->cur);
-        next(lex);
-    }
-    const int id = match_keyword(buf->value);
+static void lex_ident(Lexer *lex, Token *tok) {
+    tok->kind = T_IDENT;
+    consume(lex, tok);
+    while (is_ident(lex)) consume(lex, tok);
+    const int id = match_keyword(tok->value);
     if (id != -1) {
-        buf->kind = T_KEYWORD;
-        free(buf->value);
-        buf->value = NULL;
-        buf->id = id;
+        tok->kind = T_KEYWORD;
+        free(tok->value);
+        tok->value = NULL;
+        tok->id = id;
     } else {
-        if (strcmp(buf->value, "f") == 0)
+        if (strcmp(tok->value, "f") == 0)
             lex->state = STATE_BEGIN_F;
-        if (strcmp(buf->value, "r") == 0)
+        if (strcmp(tok->value, "r") == 0)
             lex->state = STATE_BEGIN_R;
     }
 }
 
-static void lex_comment_newline(Lexer *lex, Token *buf) {
-    push_token(lex, copy_token(buf));
-    buf->value = NULL;
-    buf->len = 0;
+static void lex_comment_newline(Lexer *lex, Token *tok) {
+    push_token(lex, copy_token(tok));
+    tok->value = NULL;
+    tok->len = 0;
     push_token(lex, make_token(T_NEWLINE, lex->pos));
     lex->tokens.list[lex->tokens.len - 1]->comment = true;
     lex->pos.line++;
@@ -308,21 +303,18 @@ static void lex_comment_newline(Lexer *lex, Token *buf) {
     next(lex);
 }
 
-static void lex_comment_line(Lexer *lex, Token *buf) {
-    buf->kind = T_COMMENT_LINE;
+static void lex_comment_line(Lexer *lex, Token *tok) {
+    tok->kind = T_COMMENT_LINE;
     next(lex);
-    while (has_next(lex) && !is_newline(lex)) {
-        write_token(buf, lex->cur);
-        next(lex);
-    }
+    while (has_next(lex) && !is_newline(lex)) consume(lex, tok);
 }
 
-static void lex_comment_block(Lexer *lex, Token *buf) {
-    buf->kind = T_COMMENT_BLOCK;
+static void lex_comment_block(Lexer *lex, Token *tok) {
+    tok->kind = T_COMMENT_BLOCK;
     next(lex);
     while (has_next(lex)) {
         if (is_newline(lex)) {
-            lex_comment_newline(lex, buf);
+            lex_comment_newline(lex, tok);
             if (!has_next(lex)) return;
         }
         if (lex->cur == '*') {
@@ -332,18 +324,17 @@ static void lex_comment_block(Lexer *lex, Token *buf) {
                 next(lex);
                 return;
             }
-            write_token(buf, '*');
+            write_token(tok, '*');
             if (is_newline(lex)) {
-                lex_comment_newline(lex, buf);
+                lex_comment_newline(lex, tok);
                 if (!has_next(lex)) return;
             }
         }
-        write_token(buf, lex->cur);
-        next(lex);
+        consume(lex, tok);
     }
 }
 
-static void lex_literal(Lexer *lex, Token *buf, char delim) {
+static void lex_literal(Lexer *lex, Token *tok, char delim) {
     bool escape = false;
     next(lex);
     while (has_next(lex) && (lex->cur != delim || escape)) {
@@ -351,14 +342,13 @@ static void lex_literal(Lexer *lex, Token *buf, char delim) {
             escape = false;
         if (lex->cur == '\\')
             escape = true;
-        write_token(buf, lex->cur);
-        next(lex);
+        consume(lex, tok);
     }
     next(lex);
 }
 
-static void lex_fstring_body(Lexer *lex, Token *buf) {
-    buf->kind = T_FSTRING_BODY;
+static void lex_fstring_body(Lexer *lex, Token *tok) {
+    tok->kind = T_FSTRING_BODY;
     bool escape = false;
     bool done = false;
     while (has_next(lex)) {
@@ -376,10 +366,9 @@ static void lex_fstring_body(Lexer *lex, Token *buf) {
             escape = false;
         if (lex->cur == '\\')
             escape = true;
-        write_token(buf, lex->cur);
-        next(lex);
+        consume(lex, tok);
     }
-    push_token(lex, buf);
+    push_token(lex, tok);
     if (done) {
         push_token(lex, make_token(T_FSTRING_END, lex->pos));
         next(lex);
@@ -392,43 +381,40 @@ static void lex_rstring(Lexer *lex) {
     last->value = NULL;
     last->len = 0;
     next(lex);
-    while (has_next(lex) && lex->cur != '"') {
-        write_token(last, lex->cur);
-        next(lex);
-    }
+    while (has_next(lex) && lex->cur != '"') consume(lex, last);
     next(lex);
 }
 
-static void lex_indent(Lexer *lex, Token *buf) {
-    int indent = buf->len - lex->indent;
-    buf->kind = T_INDENT;
+static void lex_indent(Lexer *lex, Token *tok) {
+    int indent = tok->len - lex->indent;
+    tok->kind = T_INDENT;
     if (indent == 0) {
-        buf->level = 0;
+        tok->level = 0;
         return;
     }
     if (indent > 0) {
-        buf->level = 1;
+        tok->level = 1;
         push_indent(lex, indent);
         lex->indent += indent;
         return;
     }
     if (indent < 0) {
-        buf->kind = T_DEDENT;
-        size_t buflen = buf->len;
+        tok->kind = T_DEDENT;
+        size_t len = tok->len;
         for (int i = lex->indents.len - 1; i >= 0; i--) {
-            if (buflen == 0) break;
-            if (buflen < lex->indents.stack[i]) error_lexer(lex, "invalid indentation\n");
-            buflen -= lex->indents.stack[i];
+            if (len == 0) break;
+            if (len < lex->indents.stack[i]) error_lexer(lex, "invalid indentation");
+            len -= lex->indents.stack[i];
             pop_indent(lex);
-            buf->level++;
+            tok->level++;
             lex->indent--;
         }
     }
 }
 
-static inline void lex_newline(Lexer *lex, Token *buf) {
-    buf->kind = T_NEWLINE;
-    buf->comment = false;
+static inline void lex_newline(Lexer *lex, Token *tok) {
+    tok->kind = T_NEWLINE;
+    tok->comment = false;
     lex->state = STATE_NEWL;
     next(lex);
 }
@@ -441,7 +427,7 @@ static inline void lex_invalid(Lexer *lex) {
 void tokenize(Lexer *lex) {
     while (has_next(lex)) {
         if (lex->state == STATE_NEWL) {
-            lex->state == STATE_NONE;
+            lex->state = STATE_NONE;
             lex->pos.line++;
             lex->pos.column = 1;
             if (lex->cur != ' ' && !empty_indent(lex)) {
@@ -467,212 +453,212 @@ void tokenize(Lexer *lex) {
                 continue;
             }
         }
-        Token *buf = make_token(T_UNKNOWN, lex->pos);
+        Token *tok = make_token(T_UNKNOWN, lex->pos);
         if (lex->state == STATE_F_EXPR && lex->cur == '}') {
             lex->state = STATE_F_BODY;
             next(lex);
             continue;
         }
         if (lex->state == STATE_F_BODY) {
-            lex_fstring_body(lex, buf);
+            lex_fstring_body(lex, tok);
             continue;
         }
         switch (lex->cur) {
             case '=':
-                lex_operator(lex, buf, T_EQUAL);
+                lex_operator(lex, tok, T_EQUAL);
                 if (lex->cur == '=')
-                    lex_operator(lex, buf, T_TWO_EQ);
+                    lex_operator(lex, tok, T_TWO_EQ);
                 break;
             case '+':
-                lex_operator(lex, buf, T_PLUS);
+                lex_operator(lex, tok, T_PLUS);
                 switch (lex->cur) {
                     case '=':
-                        lex_operator(lex, buf, T_PLUS_EQ);
+                        lex_operator(lex, tok, T_PLUS_EQ);
                         break;
                     case '+':
-                        lex_operator(lex, buf, T_INCREASE);
+                        lex_operator(lex, tok, T_INCREASE);
                         break;
                 }
                 break;
             case '-':
-                lex_operator(lex, buf, T_MINUS);
+                lex_operator(lex, tok, T_MINUS);
                 switch (lex->cur) {
                     case '=':
-                        lex_operator(lex, buf, T_MINUS_EQ);
+                        lex_operator(lex, tok, T_MINUS_EQ);
                         break;
                     case '-':
-                        lex_operator(lex, buf, T_DECREASE);
+                        lex_operator(lex, tok, T_DECREASE);
                         break;
                 }
                 break;
             case '*':
-                lex_operator(lex, buf, T_STAR);
+                lex_operator(lex, tok, T_STAR);
                 if (lex->cur == '=')
-                    lex_operator(lex, buf, T_STAR_EQ);
+                    lex_operator(lex, tok, T_STAR_EQ);
                 break;
             case '/':
-                lex_operator(lex, buf, T_SLASH);
+                lex_operator(lex, tok, T_SLASH);
                 switch (lex->cur) {
                     case '=':
-                        lex_operator(lex, buf, T_SLASH_EQ);
+                        lex_operator(lex, tok, T_SLASH_EQ);
                         break;
                     case '/':
-                        lex_comment_line(lex, buf);
+                        lex_comment_line(lex, tok);
                         break;
                     case '*':
-                        lex_comment_block(lex, buf);
+                        lex_comment_block(lex, tok);
                         break;
                 }
                 break;
             case '<':
-                lex_operator(lex, buf, T_LESS);
+                lex_operator(lex, tok, T_LESS);
                 switch (lex->cur) {
                     case '=':
-                        lex_operator(lex, buf, T_LESS_EQ);
+                        lex_operator(lex, tok, T_LESS_EQ);
                         break;
                     case '<':
-                        lex_operator(lex, buf, T_LSHIFT);
+                        lex_operator(lex, tok, T_LSHIFT);
                         if (lex->cur == '=')
-                            lex_operator(lex, buf, T_LSHIFT_EQ);
+                            lex_operator(lex, tok, T_LSHIFT_EQ);
                         break;
                 }
                 break;
             case '>':
-                lex_operator(lex, buf, T_GREATER);
+                lex_operator(lex, tok, T_GREATER);
                 switch (lex->cur) {
                     case '=':
-                        lex_operator(lex, buf, T_GREATER_EQ);
+                        lex_operator(lex, tok, T_GREATER_EQ);
                         break;
                     case '>':
-                        lex_operator(lex, buf, T_RSHIFT);
+                        lex_operator(lex, tok, T_RSHIFT);
                         if (lex->cur == '=')
-                            lex_operator(lex, buf, T_RSHIFT_EQ);
+                            lex_operator(lex, tok, T_RSHIFT_EQ);
                         break;
                 }
                 break;
             case '&':
-                lex_operator(lex, buf, T_AMPER);
+                lex_operator(lex, tok, T_AMPER);
                 switch (lex->cur) {
                     case '=':
-                        lex_operator(lex, buf, T_AMPER_EQ);
+                        lex_operator(lex, tok, T_AMPER_EQ);
                         break;
                     case '&':
-                        lex_operator(lex, buf, T_TWO_AMPER);
+                        lex_operator(lex, tok, T_TWO_AMPER);
                         break;
                 }
                 break;
             case '|':
-                lex_operator(lex, buf, T_PIPE);
+                lex_operator(lex, tok, T_PIPE);
                 switch (lex->cur) {
                     case '=':
-                        lex_operator(lex, buf, T_PIPE_EQ);
+                        lex_operator(lex, tok, T_PIPE_EQ);
                         break;
                     case '|':
-                        lex_operator(lex, buf, T_TWO_PIPE);
+                        lex_operator(lex, tok, T_TWO_PIPE);
                         break;
                 }
                 break;
             case '!':
-                lex_operator(lex, buf, T_EXCLAMATION);
+                lex_operator(lex, tok, T_EXCLAMATION);
                 if (lex->cur == '=')
-                    lex_operator(lex, buf, T_EXCLAMATION_EQ);
+                    lex_operator(lex, tok, T_EXCLAMATION_EQ);
                 break;
             case '%':
-                lex_operator(lex, buf, T_PERCENT);
+                lex_operator(lex, tok, T_PERCENT);
                 if (lex->cur == '=')
-                    lex_operator(lex, buf, T_PERCENT_EQ);
+                    lex_operator(lex, tok, T_PERCENT_EQ);
                 break;
             case '.':
-                lex_operator(lex, buf, T_DOT);
+                lex_operator(lex, tok, T_DOT);
                 if (lex->cur == '.') {
-                    lex_operator(lex, buf, T_TWO_DOT);
+                    lex_operator(lex, tok, T_TWO_DOT);
                     if (lex->cur == '.')
-                        lex_operator(lex, buf, T_ELLIPSIS);
+                        lex_operator(lex, tok, T_ELLIPSIS);
                 }
                 break;
             case ',':
-                lex_operator(lex, buf, T_COMMA);
+                lex_operator(lex, tok, T_COMMA);
                 break;
             case ':':
-                lex_operator(lex, buf, T_COLON);
+                lex_operator(lex, tok, T_COLON);
                 break;
             case ';':
-                lex_operator(lex, buf, T_SEMI);
+                lex_operator(lex, tok, T_SEMI);
                 break;
             case '_':
-                lex_operator(lex, buf, T_UNDERSCORE);
+                lex_operator(lex, tok, T_UNDERSCORE);
                 if (is_ident(lex)) {
-                    write_token(buf, '_');
-                    lex_ident(lex, buf);
+                    write_token(tok, '_');
+                    lex_ident(lex, tok);
                 }
                 break;
             case '?':
-                lex_operator(lex, buf, T_QUEST);
+                lex_operator(lex, tok, T_QUEST);
                 break;
             case '(':
-                lex_operator(lex, buf, T_LPAR);
+                lex_operator(lex, tok, T_LPAR);
                 break;
             case ')':
-                lex_operator(lex, buf, T_RPAR);
+                lex_operator(lex, tok, T_RPAR);
                 break;
             case '[':
-                lex_operator(lex, buf, T_LSQB);
+                lex_operator(lex, tok, T_LSQB);
                 break;
             case ']':
-                lex_operator(lex, buf, T_RSQB);
+                lex_operator(lex, tok, T_RSQB);
                 break;
             case '{':
-                lex_operator(lex, buf, T_LBRACE);
+                lex_operator(lex, tok, T_LBRACE);
                 break;
             case '}':
-                lex_operator(lex, buf, T_RBRACE);
+                lex_operator(lex, tok, T_RBRACE);
                 break;
             case '^':
-                lex_operator(lex, buf, T_CARET);
+                lex_operator(lex, tok, T_CARET);
                 if (lex->cur == '=')
-                    lex_operator(lex, buf, T_CARET_EQ);
+                    lex_operator(lex, tok, T_CARET_EQ);
                 break;
             case '~':
-                lex_operator(lex, buf, T_TILDE);
+                lex_operator(lex, tok, T_TILDE);
                 break;
             case '@':
-                lex_operator(lex, buf, T_AT);
+                lex_operator(lex, tok, T_AT);
                 break;
             case '#': 
-                lex_operator(lex, buf, T_HASH);
+                lex_operator(lex, tok, T_HASH);
                 break;
             case '\\':
-                lex_operator(lex, buf, T_ESCAPE);
+                lex_operator(lex, tok, T_ESCAPE);
                 break;
             case ' ':
-                lex_operator(lex, buf, T_SPACE);
+                lex_operator(lex, tok, T_SPACE);
                 while (lex->cur == ' ') {
-                    buf->len++;
+                    tok->len++;
                     next(lex);
                 }
                 if (peek_token(lex)->kind == T_NEWLINE)
-                    lex_indent(lex, buf);
+                    lex_indent(lex, tok);
                 break;
             case '\'':
-                buf->kind = T_CHAR;
-                lex_literal(lex, buf, '\'');
+                tok->kind = T_CHAR;
+                lex_literal(lex, tok, '\'');
                 break;
             case '"':
-                buf->kind = T_STRING;
-                lex_literal(lex, buf, '"');
+                tok->kind = T_STRING;
+                lex_literal(lex, tok, '"');
                 break;
             default:
                 if (is_newline(lex))
-                    lex_newline(lex, buf);
+                    lex_newline(lex, tok);
                 else if (is_number(lex))
-                    lex_number(lex, buf);
+                    lex_number(lex, tok);
                 else if (is_letter(lex))
-                    lex_ident(lex, buf);
+                    lex_ident(lex, tok);
                 else
                     lex_invalid(lex);
                 break;
         }
-        push_token(lex, buf);
+        push_token(lex, tok);
     }
 }
 
