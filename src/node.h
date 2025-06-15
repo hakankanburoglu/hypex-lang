@@ -1,8 +1,8 @@
 #ifndef NODE_H
 #define NODE_H
 
-#include <stddef.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #include "token.h"
 
@@ -15,13 +15,13 @@ enum {
     NODE_TERNARY_OP,
     NODE_LITERAL,
     NODE_IDENT,
-    NODE_LOGIC_EXPR,
     NODE_PAREN_GROUP,
     NODE_FUNC_DECL,
     NODE_ARG_DECL,
     NODE_RET_STMT,
     NODE_VAR_DECL,
-    NODE_CALL_EXPR
+    NODE_CALL_EXPR,
+    NODE_IF_STMT
 };
 
 enum {
@@ -32,7 +32,7 @@ enum {
     OP_PRE_INC, // ++x
     OP_PRE_DEC, // --x
     OP_AMPER, // &
-    // POST UNARY
+    // POST_UNARY
     OP_POST_INC, // x++
     OP_POST_DEC, // x--
     // BINARY
@@ -43,6 +43,11 @@ enum {
     OP_MUL, // *
     OP_DIV, // /
     OP_MOD, // %
+    OP_A_ADD, // +=
+    OP_A_SUB, // -=
+    OP_A_MUL, // *=
+    OP_A_DIV, // /=
+    OP_A_MOD, // %=
     OP_EQ, // ==
     OP_NE, // !=
     OP_LT, // <
@@ -56,8 +61,13 @@ enum {
     OP_XOR, // ^
     OP_SHL, // <<
     OP_SHR, // >>
-    OP_SLE, // <<=
-    OP_SRE // >>= 
+    OP_A_AND, // &=
+    OP_A_OR, // |=
+    OP_A_XOR, // ^=
+    OP_A_SHL, // <<=
+    OP_A_SHR, // >>=
+    // TERNARY
+    OP_COND // ? :
 };
 
 enum {
@@ -85,32 +95,33 @@ enum {
     TYPE_GENERIC
 };
 
+enum {
+    FLAG_NONE = 0,
+    FLAG_CONST = 1,
+    FLAG_STAT = 2,
+    FLAG_PRIV = 4,
+    FLAG_PROT = 8,
+    FLAG_REF = 16
+};
+
 typedef struct Type {
     int kind;
     struct Type **types;
     size_t cap;
     size_t len;
-    bool is_const;
-    bool is_static;
-    bool is_private;
-    bool is_protected;
-    bool is_by_ref;  
+    int flags;
 } Type;
 
 typedef struct Node {
     int kind;
     struct Node *parent;
-    Token **tok_list;
-    size_t toklen;
     union {
         struct {
             struct Node **body;
             size_t cap;
             size_t len;
-        } block;
-        struct {
-            struct Node *expr;
-        } stmt;
+        } block; // source, block
+        struct Node *expr; // expr, logic_expr, ret_stmt
         struct {
             int op;
             struct Node *operand;
@@ -126,12 +137,7 @@ typedef struct Node {
             struct Node *if_body;
             struct Node *else_body;
         } ternary_op;
-        struct {
-            Token *value;
-        } literal;
-        struct {
-            Token *value;
-        } ident;
+        Token *value; // literal, ident
         struct {
             Token *ident;
             Type *type;
@@ -153,23 +159,19 @@ typedef struct Node {
             size_t args_len;
         } call_expr;
         struct {
-            Token *ident;
-            Type *type;
-        } arg_decl;
+            struct Node *if_body;
+            struct Node *else_body;
+        } if_stmt;
     } data;
 } Node;
 
 Node *make_node(int kind, Node *parent);
 
-void consume_node(Node *node, Token *tok);
-
 Type *make_type(int kind);
 
-void push_type(Type *type, Type *elm);
+Type *copy_type(const Type *type);
 
-Type *copy_type(Type *type);
-
-Node *copy_node(Node *node);
+Node *copy_node(const Node *node);
 
 void free_node(Node *node);
 
