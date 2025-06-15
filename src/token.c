@@ -18,7 +18,9 @@ Token *make_token(int kind, Pos pos) {
 }
 
 Token *copy_token(const Token *tok) {
-    Token *r = make_token(tok->kind, tok->pos);
+    Token *r = (Token *)malloc(sizeof(Token));
+    if (!r) error_hypex();
+    r->kind = tok->kind;
     if (tok->value) {
         r->value = (char *)malloc(sizeof(char) * (tok->cap + 1));
         if (!r->value) error_hypex();
