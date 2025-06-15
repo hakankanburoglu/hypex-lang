@@ -3,9 +3,9 @@
 
 #include <stddef.h>
 
-#include "token.h"
 #include "lexer.h"
 #include "node.h"
+#include "token.h"
 
 typedef struct {
     Token **tok_list;
@@ -13,6 +13,7 @@ typedef struct {
     Node *expr;
     char *file;
     int offset;
+    Token *tok;
 } Parser;
 
 Parser *init_parser(Lexer *lex);
