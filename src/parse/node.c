@@ -4,8 +4,8 @@
 #include <string.h>
 
 #include "error.h"
-#include "node.h"
-#include "token.h"
+#include "parse/node.h"
+#include "parse/token.h"
 
 Node *make_node(int kind, Node *parent) {
     Node *node = (Node *)malloc(sizeof(Node));

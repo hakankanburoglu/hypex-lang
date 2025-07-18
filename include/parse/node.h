@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "token.h"
+#include "parse/token.h"
 
 enum {
     NODE_SOURCE,

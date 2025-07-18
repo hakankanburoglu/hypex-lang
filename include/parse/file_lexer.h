@@ -1,7 +1,7 @@
 #ifndef FILE_LEXER_H
 #define FILE_LEXER_H
 
-#include "lexer.h"
+#include "parse/lexer.h"
 
 void lex_file(Lexer *lex);
 

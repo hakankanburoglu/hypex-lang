@@ -4,7 +4,7 @@
 #include <string.h>
 
 #include "error.h"
-#include "token.h"
+#include "parse/token.h"
 
 Token *make_token(int kind, Pos pos) {
     Token *tok = (Token *)malloc(sizeof(Token));

@@ -5,9 +5,9 @@
 #include <string.h>
 
 #include "error.h"
-#include "node.h"
-#include "parser.h"
-#include "token.h"
+#include "parse/node.h"
+#include "parse/parser.h"
+#include "parse/token.h"
 
 const int OP[][2] = {
     // PRE UNARY

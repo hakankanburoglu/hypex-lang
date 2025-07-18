@@ -3,10 +3,10 @@
 #include <string.h>
 
 #include "debug.h"
-#include "lexer.h"
-#include "node.h"
-#include "parser.h"
-#include "token.h"
+#include "parse/lexer.h"
+#include "parse/node.h"
+#include "parse/parser.h"
+#include "parse/token.h"
 
 static inline const char *file_name(const char *file) {
     const char *res = strrchr(file, '/'); // for unix

@@ -3,9 +3,9 @@
 
 #include <stddef.h>
 
-#include "lexer.h"
-#include "node.h"
-#include "token.h"
+#include "parse/lexer.h"
+#include "parse/node.h"
+#include "parse/token.h"
 
 typedef struct {
     Token **tok_list;
