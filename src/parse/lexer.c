@@ -59,7 +59,6 @@ Lexer *init_lexer(const char *input, const char *file) {
     lex->pos = (Pos){1, 1};
     lex->cur = lex->input ? lex->input[0] : '\0';
     lex->state = STATE_NONE;
-    lex->indent = 0;
     return lex;
 }
 
@@ -388,29 +387,23 @@ static void lex_rstring(Lexer *lex) {
 }
 
 static void lex_indent(Lexer *lex, Token *tok) {
-    int indent = tok->len - lex->indent;
     tok->kind = T_INDENT;
-    if (indent == 0) {
-        tok->level = 0;
-        return;
-    }
-    if (indent > 0) {
+    tok->level = 0;
+    size_t len = tok->len;
+    int peek = peek_indent(lex);
+    if (len > peek) {
         tok->level = 1;
-        push_indent(lex, indent);
-        lex->indent += indent;
+        push_indent(lex, len);
         return;
     }
-    if (indent < 0) {
+    if (len < peek) {
         tok->kind = T_DEDENT;
-        size_t len = tok->len;
-        for (int i = lex->indents.len - 1; i >= 0; i--) {
-            if (len == 0) break;
-            if (len < lex->indents.stack[i]) error_lexer(lex, "invalid indentation");
-            len -= lex->indents.stack[i];
+        while (peek_indent(lex) > len) {
             pop_indent(lex);
             tok->level++;
-            lex->indent--;
         }
+        if (peek_indent(lex) != len) error_lexer(lex, "invalid indentation");
+        return;
     }
 }
 

@@ -24,7 +24,6 @@ typedef struct {
     Pos pos;
     char cur;
     int state;
-    int indent;
 } Lexer;
 
 Lexer *init_lexer(const char *input, const char *file);
