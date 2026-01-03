@@ -1,8 +1,8 @@
-#ifndef FILE_LEXER_H
-#define FILE_LEXER_H
+#ifndef FILE_READER_H
+#define FILE_READER_H
 
 #include "parse/lexer.h"
 
-void lex_file(Lexer *lex);
+void file_read(Lexer *lex);
 
-#endif //FILE_LEXER_H
+#endif //FILE_READER_H

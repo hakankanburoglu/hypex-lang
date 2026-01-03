@@ -3,10 +3,10 @@
 #include <stdlib.h>
 
 #include "error.h"
-#include "parse/file_lexer.h"
+#include "parse/file_reader.h"
 #include "parse/lexer.h"
 
-void lex_file(Lexer *lex) {
+void file_read(Lexer *lex) {
     FILE *file = fopen(lex->file, "r");
     if (!file) fatal_error("no such file or directory: %s", lex->file);
     fseek(file, 0, SEEK_END);
