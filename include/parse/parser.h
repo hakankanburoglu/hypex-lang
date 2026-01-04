@@ -16,7 +16,7 @@ typedef struct {
     Token *tok;
 } Parser;
 
-Parser *init_parser(Lexer *lex);
+Parser *make_parser(Lexer *lex);
 
 void parse(Parser *p);
 

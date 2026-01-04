@@ -26,7 +26,7 @@ typedef struct {
     int state;
 } Lexer;
 
-Lexer *init_lexer(const char *input, const char *file);
+Lexer *make_lexer(const char *input, const char *file);
 
 void tokenize(Lexer *lex);
 
