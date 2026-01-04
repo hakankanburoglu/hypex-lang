@@ -29,18 +29,18 @@ enum {
 
 Lexer *make_lexer(void) {
     Lexer *lex = malloc(sizeof *lex);
-    if (!lex) error_hypex();
+    if (!lex) internal_error();
     lex->input = NULL;
     lex->inputlen = 0;
     lex->file = NULL;
     lex->tokens.list = malloc(sizeof *lex->tokens.list * 16);
-    if (!lex->tokens.list) error_hypex();
+    if (!lex->tokens.list) internal_error();
     lex->tokens.cap = 16;
     lex->tokens.len = 0;
     lex->indents.stack = malloc(sizeof *lex->indents.stack);
     lex->indents.cap = 1;
     lex->indents.len = 1;
-    if (!lex->indents.stack) error_hypex();
+    if (!lex->indents.stack) internal_error();
     lex->indents.stack[0] = 0;
     lex->offset = 0;
     lex->pos = (Pos){1, 1};
@@ -58,8 +58,8 @@ static inline void init_number(Token *tok) {
 static inline void push_token(Lexer *lex, Token *tok) {
     if (lex->tokens.len == lex->tokens.cap) {
         lex->tokens.cap *= 2;
-        lex->tokens.list = (Token **)realloc(lex->tokens.list, sizeof(Token) * lex->tokens.cap);
-        if (!lex->tokens.list) error_hypex();
+        lex->tokens.list = realloc(lex->tokens.list, sizeof *lex->tokens.list * lex->tokens.cap);
+        if (!lex->tokens.list) internal_error();
     }
     lex->tokens.list[lex->tokens.len++] = tok;
 }
@@ -67,13 +67,13 @@ static inline void push_token(Lexer *lex, Token *tok) {
 static void write_token(Token *tok, char c) {
     if (!tok->value) {
         tok->cap = 16;
-        tok->value = (char *)realloc(tok->value, sizeof(char) * 17);
-        if (!tok->value) error_hypex();
+        tok->value = realloc(tok->value, sizeof *tok->value * 17);
+        if (!tok->value) internal_error();
     }
     if (tok->len == tok->cap) {
         tok->cap *= 2;
-        tok->value = (char *)realloc(tok->value, sizeof(char) * (tok->cap + 1));
-        if (!tok->value) error_hypex();
+        tok->value = realloc(tok->value, sizeof *tok->value * (tok->cap + 1));
+        if (!tok->value) internal_error();
     }
     tok->value[tok->len++] = c;
     tok->value[tok->len] = '\0';
@@ -82,19 +82,19 @@ static void write_token(Token *tok, char c) {
 static inline void push_indent(Lexer *lex, int indent) {
     if (lex->indents.len == lex->indents.cap) {
         lex->indents.cap *= 2;
-        lex->indents.stack = (int *)realloc(lex->indents.stack, lex->indents.cap * sizeof(int));
-        if (!lex->indents.stack) error_hypex();
+        lex->indents.stack = realloc(lex->indents.stack, sizeof *lex->indents.stack * lex->indents.cap);
+        if (!lex->indents.stack) internal_error();
     }
     lex->indents.stack[lex->indents.len++] = indent;
 }
 
 static inline void pop_indent(Lexer *lex) {
-    if (lex->indents.len == 0) error_hypex();
+    if (lex->indents.len == 0) internal_error();
     (lex->indents.len)--;
 }
 
 static inline int peek_indent(const Lexer *lex) {
-    if (lex->indents.len == 0) error_hypex();
+    if (lex->indents.len == 0) internal_error();
     return lex->indents.stack[lex->indents.len - 1];
 }
 
@@ -250,7 +250,7 @@ static void lex_number(Lexer *lex, Token *tok) {
                 }
                 break;
             default:
-                error_hypex();
+                internal_error();
                 break;
         }
         break;
@@ -376,21 +376,19 @@ static void lex_rstring(Lexer *lex) {
 static void lex_indent(Lexer *lex, Token *tok) {
     tok->kind = T_INDENT;
     tok->level = 0;
-    size_t len = tok->len;
     int peek = peek_indent(lex);
-    if (len > peek) {
+    if (tok->len > peek) {
         tok->level = 1;
-        push_indent(lex, len);
+        push_indent(lex, tok->len);
         return;
     }
-    if (len < peek) {
+    if (tok->len < peek) {
         tok->kind = T_DEDENT;
-        while (peek_indent(lex) > len) {
+        while (peek_indent(lex) > tok->len) {
             pop_indent(lex);
             tok->level++;
         }
-        if (peek_indent(lex) != len) error_lexer(lex, "invalid indentation");
-        return;
+        if (peek_indent(lex) != tok->len) error_lexer(lex, "invalid indentation");
     }
 }
 
@@ -645,6 +643,7 @@ void tokenize(Lexer *lex) {
 }
 
 void free_lex(Lexer *lex) {
+    if(!lex) return;
     free(lex->input);
     free(lex->file);
     for (int i = 0; i < lex->tokens.len; i++)
