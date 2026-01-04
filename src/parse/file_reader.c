@@ -16,8 +16,8 @@ void file_read(Lexer *lex) {
         fatal_error("file processing error: %s", lex->file);
     }
     rewind(file);
-    char *buf = malloc(sizeof(char) * (filelen + 1));
-    if (!buf) error_hypex();
+    char *buf = malloc(sizeof *buf * (filelen + 1));
+    if (!buf) internal_error();
     size_t readlen = fread(buf, 1, filelen, file);
     fclose(file);
     buf[readlen] = '\0';
