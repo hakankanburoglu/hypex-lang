@@ -27,37 +27,24 @@ enum {
     STATE_F_EXPR
 };
 
-Lexer *init_lexer(const char *input, const char *file) {
-    Lexer *lex = (Lexer *)malloc(sizeof(Lexer));
+Lexer *make_lexer(void) {
+    Lexer *lex = malloc(sizeof *lex);
     if (!lex) error_hypex();
-    if (input) {
-        const size_t inputlen = strlen(input);
-        lex->input = (char *)malloc(sizeof(char) * (inputlen + 1));
-        if (!lex->input) error_hypex();
-        strcpy(lex->input, input);
-        lex->inputlen = inputlen;
-    } else {
-        lex->input = NULL;
-        lex->inputlen = 0;
-    }
-    if (file) {
-        lex->file = (char *)malloc(sizeof(char) * (strlen(file) + 1));
-        if (!lex->file) error_hypex();
-        strcpy(lex->file, file);
-    } else {
-        lex->file = NULL;
-    }
-    lex->tokens.list = (Token **)malloc(sizeof(Token) * 16);
+    lex->input = NULL;
+    lex->inputlen = 0;
+    lex->file = NULL;
+    lex->tokens.list = malloc(sizeof *lex->tokens.list * 16);
+    if (!lex->tokens.list) error_hypex();
     lex->tokens.cap = 16;
     lex->tokens.len = 0;
-    lex->indents.stack = (int *)malloc(sizeof(int));
-    if (!lex->indents.stack) error_hypex();
+    lex->indents.stack = malloc(sizeof *lex->indents.stack);
     lex->indents.cap = 1;
     lex->indents.len = 1;
+    if (!lex->indents.stack) error_hypex();
     lex->indents.stack[0] = 0;
     lex->offset = 0;
     lex->pos = (Pos){1, 1};
-    lex->cur = lex->input ? lex->input[0] : '\0';
+    lex->cur = '\0';
     lex->state = STATE_NONE;
     return lex;
 }
