@@ -6,15 +6,6 @@
 
 #include "error.h"
 
-noreturn void fatal_error(const char *format, ...) {
-    va_list args;
-    va_start(args, format);
-    vfprintf(stderr, format, args);
-    fprintf(stderr, "\n");
-    va_end(args);
-    exit(EXIT_FAILURE);
-}
-
 void error(const char *file, int line, int column, const char *format, ...) {
     va_list args;
     va_start(args, format);
@@ -25,6 +16,7 @@ void error(const char *file, int line, int column, const char *format, ...) {
     va_end(args);
 }
 
-void error_hypex() {
-    fatal_error("hypex error");
+noreturn void internal_error(void) {
+    fprintf(stderr, "internal error\n");
+    exit(EXIT_FAILURE);
 }
