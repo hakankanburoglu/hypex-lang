@@ -7,8 +7,8 @@
 #include "parse/token.h"
 
 Token *make_token(int kind, Pos pos) {
-    Token *tok = (Token *)malloc(sizeof(Token));
-    if (!tok) error_hypex();
+    Token *tok = malloc(sizeof *tok);
+    if (!tok) internal_error();
     tok->kind = kind;
     tok->value = NULL;
     tok->cap = 0;
@@ -18,12 +18,12 @@ Token *make_token(int kind, Pos pos) {
 }
 
 Token *copy_token(const Token *tok) {
-    Token *r = (Token *)malloc(sizeof(Token));
-    if (!r) error_hypex();
+    Token *r = malloc(sizeof *r);
+    if (!r) internal_error();
     r->kind = tok->kind;
     if (tok->value) {
-        r->value = (char *)malloc(sizeof(char) * (tok->cap + 1));
-        if (!r->value) error_hypex();
+        r->value = malloc(sizeof *r->value * (tok->cap + 1));
+        if (!r->value) internal_error();
         strcpy(r->value, tok->value);
     }
     r->cap = tok->cap;
