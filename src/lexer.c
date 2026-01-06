@@ -6,8 +6,8 @@
 #include <string.h>
 
 #include "error.h"
-#include "parse/lexer.h"
-#include "parse/token.h"
+#include "lexer.h"
+#include "token.h"
 
 #define KWLEN 41
 

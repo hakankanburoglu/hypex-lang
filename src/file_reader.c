@@ -3,8 +3,8 @@
 #include <stdlib.h>
 
 #include "error.h"
-#include "parse/file_reader.h"
-#include "parse/lexer.h"
+#include "file_reader.h"
+#include "lexer.h"
 
 void file_read(Lexer *lex) {
     FILE *file = fopen(lex->file, "r");

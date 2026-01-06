@@ -1,10 +1,10 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
-#include "parse/lexer.h"
-#include "parse/node.h"
-#include "parse/parser.h"
-#include "parse/token.h"
+#include "lexer.h"
+#include "node.h"
+#include "parser.h"
+#include "token.h"
 
 void print_token_kind(int kind);
 

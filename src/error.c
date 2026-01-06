@@ -17,6 +17,6 @@ void error(const char *file, int line, int column, const char *format, ...) {
 }
 
 noreturn void internal_error(void) {
-    fprintf(stderr, "internal error\n");
+    fprintf(stderr, "internal compiler error\n");
     exit(EXIT_FAILURE);
 }
