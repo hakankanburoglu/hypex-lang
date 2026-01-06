@@ -5,4 +5,4 @@
 
 void file_read(Lexer *lex);
 
-#endif //FILE_READER_H
+#endif // FILE_READER_H

@@ -32,4 +32,4 @@ void tokenize(Lexer *lex);
 
 void free_lex(Lexer *lex);
 
-#endif //LEXER_H
+#endif // LEXER_H

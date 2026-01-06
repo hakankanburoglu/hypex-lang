@@ -149,7 +149,7 @@ typedef struct {
             bool is_exp;
             bool is_neg;
         } num;
-        // _INDENT, _DEDENT
+        // INDENT, DEDENT
         int level;
         // NEWLINE
         bool comment;
@@ -162,4 +162,4 @@ Token *copy_token(const Token *tok);
 
 void free_token(Token *tok);
 
-#endif //TOKEN_H
+#endif // TOKEN_H

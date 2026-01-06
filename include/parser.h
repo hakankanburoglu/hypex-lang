@@ -22,4 +22,4 @@ void parse(Parser *p);
 
 void free_parser(Parser *p);
 
-#endif //PARSER_H
+#endif // PARSER_H

@@ -29,9 +29,9 @@ enum {
     OP_NOT, // !
     OP_BIT_NOT, // ~ 
     OP_NEG, // -
+    OP_AMPER, // &
     OP_PRE_INC, // ++x
     OP_PRE_DEC, // --x
-    OP_AMPER, // &
     // POST_UNARY
     OP_POST_INC, // x++
     OP_POST_DEC, // x--
@@ -175,4 +175,4 @@ Node *copy_node(const Node *node);
 
 void free_node(Node *node);
 
-#endif //NODE_H
+#endif // NODE_H
