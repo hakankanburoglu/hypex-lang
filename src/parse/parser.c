@@ -10,49 +10,62 @@
 #include "parse/token.h"
 
 const int OP[][2] = {
+
+    // Format: {Precedence, Associativity}
+
+    // Precedence:
+    //     Higher value means higher binding strength.
+
+    // Associativity: 
+    //     0 = left-associative
+    //     1 = right-associative
+
     // PRE UNARY
-    {3, 1},  // OP_NOT
-    {3, 1},  // OP_BIT_NOT
-    {3, 1},  // OP_NEG
-    {4, 1},  // OP_PRE_INC
-    {4, 1},  // OP_PRE_DEC
-    {5, 1},  // OP_AMPER
+    {80, 1},  // OP_NOT
+    {80, 1},  // OP_BIT_NOT
+    {80, 1},  // OP_NEG
+    {85, 1},  // OP_PRE_INC
+    {85, 1},  // OP_PRE_DEC
+    {80, 1},  // OP_AMPER
+    
     // POST UNARY
-    {4, 0},  // OP_POST_INC
-    {4, 0},  // OP_POST_DEC
+    {90, 0},  // OP_POST_INC
+    {90, 0},  // OP_POST_DEC
+    
     // BINARY
-    {0, 0},  // OP_ACCESS
-    {1, 1},  // OP_ASSIGN
-    {3, 0},  // OP_ADD
-    {3, 0},  // OP_SUB
-    {2, 0},  // OP_MUL
-    {2, 0},  // OP_DIV
-    {2, 0},  // OP_MOD
-    {3, 0},  // OP_A_ADD
-    {3, 0},  // OP_A_SUB
-    {2, 0},  // OP_A_MUL
-    {2, 0},  // OP_A_DIV
-    {2, 0},  // OP_A_MOD
-    {6, 0},  // OP_EQ
-    {6, 0},  // OP_NE
-    {6, 0},  // OP_LT
-    {6, 0},  // OP_GT
-    {6, 0},  // OP_LE
-    {6, 0},  // OP_GE
-    {4, 0},  // OP_BIT_AND
-    {4, 0},  // OP_BIT_OR
-    {7, 0},  // OP_AND
-    {7, 0},  // OP_OR
-    {5, 0},  // OP_XOR
-    {2, 0},  // OP_SHL
-    {2, 0},  // OP_SHR
-    {4, 0},  // OP_A_AND
-    {4, 0},  // OP_A_OR
-    {5, 0},  // OP_A_XOR
-    {1, 1},  // OP_A_SHL
-    {1, 1},  // OP_A_SHR
+    {100, 0}, // OP_ACCESS
+    {10, 1},  // OP_ASSIGN
+    {50, 0},  // OP_ADD
+    {50, 0},  // OP_SUB
+    {60, 0},  // OP_MUL
+    {60, 0},  // OP_DIV
+    {60, 0},  // OP_MOD
+    {10, 1},  // OP_A_ADD
+    {10, 1},  // OP_A_SUB
+    {10, 1},  // OP_A_MUL
+    {10, 1},  // OP_A_DIV
+    {10, 1},  // OP_A_MOD
+    {40, 0},  // OP_EQ
+    {40, 0},  // OP_NE
+    {40, 0},  // OP_LT
+    {40, 0},  // OP_GT
+    {40, 0},  // OP_LE
+    {40, 0},  // OP_GE
+    {35, 0},  // OP_BIT_AND
+    {30, 0},  // OP_BIT_OR
+    {32, 0},  // OP_XOR
+    {25, 0},  // OP_AND
+    {20, 0},  // OP_OR
+    {55, 0},  // OP_SHL
+    {55, 0},  // OP_SHR
+    {10, 1},  // OP_A_AND
+    {10, 1},  // OP_A_OR
+    {10, 1},  // OP_A_XOR
+    {10, 1},  // OP_A_SHL
+    {10, 1},  // OP_A_SHR
+    
     // TERNARY
-    {8, 1}   // OP_COND
+    {15, 1}   // OP_COND
 };
 
 Parser *make_parser(Lexer *lex) {
