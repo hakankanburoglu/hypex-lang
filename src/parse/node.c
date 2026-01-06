@@ -8,16 +8,16 @@
 #include "parse/token.h"
 
 Node *make_node(int kind, Node *parent) {
-    Node *node = (Node *)malloc(sizeof(Node));
-    if (!node) error_hypex();
+    Node *node = malloc(sizeof *node);
+    if (!node) internal_error();
     node->kind = kind;
     node->parent = parent;
     return node; 
 }
 
 Type *make_type(int kind) {
-    Type *type = (Type *)malloc(sizeof(Type));
-    if (!type) error_hypex();
+    Type *type = malloc(sizeof *type);
+    if (!type) internal_error();
     type->kind = kind;
     type->types = NULL;
     type->cap = 1;
@@ -27,8 +27,8 @@ Type *make_type(int kind) {
 }
 
 Type *copy_type(const Type *type) {
-    Type *r = (Type *)malloc(sizeof(Type));
-    if (!type) error_hypex();
+    Type *r = malloc(sizeof *r);
+    if (!type) internal_error();
     r->kind = type->kind;
     r->types = type->types;
     r->cap = type->cap;
@@ -38,14 +38,14 @@ Type *copy_type(const Type *type) {
 }
 
 Node *copy_node(const Node *node) {
-    Node *r = (Node *)malloc(sizeof(Node));
-    if (!r) error_hypex();
+    Node *r = malloc(sizeof *r);
+    if (!r) internal_error();
     r->kind = node->kind;
     r->parent = node->parent;
     switch (node->kind) {
         case NODE_SOURCE: case NODE_BLOCK:
-            r->data.block.body = (Node **)malloc(sizeof(Node) * node->data.block.cap);
-            if (!r->data.block.body) error_hypex();
+            r->data.block.body = malloc(sizeof *r->data.block.body * node->data.block.cap);
+            if (!r->data.block.body) internal_error();
             for (int i = 0; i < node->data.block.len; i++)
                 r->data.block.body[i] = node->data.block.body[i];
             r->data.block.cap = node->data.block.cap;
@@ -75,8 +75,8 @@ Node *copy_node(const Node *node) {
         case NODE_FUNC_DECL:
             r->data.func_decl.ident = node->data.func_decl.ident;
             r->data.func_decl.type = copy_type(node->data.func_decl.type);
-            r->data.func_decl.args = (Node **)malloc(sizeof(Node) * node->data.func_decl.args_cap);
-            if (!r->data.func_decl.args) error_hypex();
+            r->data.func_decl.args = malloc(sizeof *r->data.func_decl.args * node->data.func_decl.args_cap);
+            if (!r->data.func_decl.args) internal_error();
             for (int i = 0; i < node->data.func_decl.args_len; i++)
                 r->data.func_decl.args[i] = node->data.func_decl.args[i];
             r->data.func_decl.args_cap = node->data.func_decl.args_cap;
@@ -89,11 +89,11 @@ Node *copy_node(const Node *node) {
             r->data.var_decl.ident = node->data.var_decl.ident;
             break;
         case NODE_CALL_EXPR: case NODE_ARG_DECL:
-            r->data.call_expr.callee = (char *)malloc(sizeof(char) * (node->data.call_expr.len + 1));
-            if (!r->data.call_expr.callee) error_hypex();
+            r->data.call_expr.callee = malloc(sizeof *r->data.call_expr.callee * (node->data.call_expr.len + 1));
+            if (!r->data.call_expr.callee) internal_error();
             strcpy(r->data.call_expr.callee, node->data.call_expr.callee);
-            r->data.call_expr.args = (Node **)malloc(sizeof(Node) * node->data.call_expr.args_cap);
-            if (!r->data.call_expr.args) error_hypex();
+            r->data.call_expr.args = malloc(sizeof *r->data.call_expr.args * node->data.call_expr.args_cap);
+            if (!r->data.call_expr.args) internal_error();
             for (int i = 0; i < node->data.call_expr.args_len; i++)
                 r->data.call_expr.args[i] = node->data.call_expr.args[i];
             r->data.call_expr.args_cap = node->data.call_expr.args_cap;
