@@ -55,8 +55,8 @@ const int OP[][2] = {
     {8, 1}   // OP_COND
 };
 
-Parser *init_parser(Lexer *lex) {
-    Parser *p = (Parser *)malloc(sizeof(Parser));
+Parser *make_parser(Lexer *lex) {
+    Parser *p = malloc(sizeof(*p));
     p->tok_list = lex->tokens.list;
     p->toklen = lex->tokens.len;
     p->expr = make_node(NODE_SOURCE, NULL);
@@ -130,13 +130,13 @@ static inline Node *peek_node(Node *node) {
 
 static void push_node(Node ***nodes, size_t *cap, size_t *len, Node *node) {
     if (!*nodes) {
-        *nodes = (Node **)realloc(*nodes, sizeof(Node *));
-        if (!*nodes) error_hypex();
+        *nodes = realloc(*nodes, sizeof(Node *));
+        if (!*nodes) internal_error();
     }
     if (*len == *cap) {
         *cap *= 2;
-        *nodes = (Node **)realloc(*nodes, *cap * sizeof(Node *));
-        if (!*nodes) error_hypex();
+        *nodes = realloc(*nodes, *cap * sizeof(Node *));
+        if (!*nodes) internal_error();
     }
     (*nodes)[(*len)++] = node;
 }
@@ -152,8 +152,8 @@ static inline void push_arg(Node *node, Node *arg) {
 static inline void push_type(Type *type, Type *elm) {
     if (type->len == type->cap) {
         type->cap *= 2;
-        type->types = (Type **)realloc(type->types, sizeof(Type) * type->cap);
-        if (!type->types) error_hypex();
+        type->types = realloc(type->types, sizeof(Type) * type->cap);
+        if (!type->types) internal_error();
     }
     type->types[type->len++] = elm;
 }
@@ -181,6 +181,8 @@ static inline bool is_skip_token(const Token *tok) {
     switch (tok->kind) {
         case T_COMMENT_LINE: case T_COMMENT_BLOCK: case T_SPACE:
             return true;
+        case T_INDENT:
+            return tok->level == 0;
         case T_NEWLINE:
             return tok->comment;
         default:
