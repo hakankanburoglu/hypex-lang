@@ -1,8 +1,8 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
+#include "ast.h"
 #include "lexer.h"
-#include "node.h"
 #include "parser.h"
 #include "token.h"
 

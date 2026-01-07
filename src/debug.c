@@ -2,9 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "ast.h"
 #include "debug.h"
 #include "lexer.h"
-#include "node.h"
 #include "parser.h"
 #include "token.h"
 

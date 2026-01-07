@@ -3,8 +3,8 @@
 
 #include <stddef.h>
 
+#include "ast.h"
 #include "lexer.h"
-#include "node.h"
 #include "token.h"
 
 typedef struct {

@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "ast.h"
 #include "error.h"
-#include "node.h"
 #include "token.h"
 
 Node *make_node(int kind, Node *parent) {
