@@ -3,8 +3,10 @@
 
 #include <stdnoreturn.h>
 
+noreturn void fatal_error(const char *format, ...);
+
 void error(const char *file, int line, int column, const char *format, ...);
 
 void internal_error(void);
 
-#endif //ERROR_H
+#endif // ERROR_H

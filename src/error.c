@@ -6,6 +6,15 @@
 
 #include "error.h"
 
+noreturn void fatal_error(const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    vfprintf(stderr, format, args);
+    fprintf(stderr, "\n");
+    va_end(args);
+    exit(EXIT_FAILURE);
+}
+
 void error(const char *file, int line, int column, const char *format, ...) {
     va_list args;
     va_start(args, format);
