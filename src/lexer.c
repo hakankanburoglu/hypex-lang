@@ -38,9 +38,9 @@ Lexer *make_lexer(void) {
     lex->tokens.cap = 16;
     lex->tokens.len = 0;
     lex->indents.stack = malloc(sizeof *lex->indents.stack);
+    if (!lex->indents.stack) internal_error();
     lex->indents.cap = 1;
     lex->indents.len = 1;
-    if (!lex->indents.stack) internal_error();
     lex->indents.stack[0] = 0;
     lex->offset = 0;
     lex->pos = (Pos){1, 1};
