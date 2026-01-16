@@ -6,22 +6,19 @@
 #include "file_reader.h"
 #include "lexer.h"
 
-void file_read(Lexer *lex) {
-    FILE *file = fopen(lex->file, "r");
-    if (!file) fatal_error("no such file or directory: %s", lex->file);
-    fseek(file, 0, SEEK_END);
-    long filelen = ftell(file);
-    if (filelen < 0) {
-        fclose(file);
-        fatal_error("file processing error: %s", lex->file);
-    }
+char *file_read(const char *path, size_t *len) {
+    FILE *file = fopen(path, "r");
+    if (!file) fatal_error("no such file or directory: %s", path);
+    if (fseek(file, 0, SEEK_END) != 0) fatal_error("could not read file: %s", path);
+    long filesize = ftell(file);
+    if (filesize < 0) fatal_error("could not read file: %s", path);
     rewind(file);
-    char *buf = malloc(sizeof *buf * (filelen + 1));
+    size_t filelen = (size_t)filesize;
+    char *buf = malloc(filelen + 1);
     if (!buf) internal_error();
     size_t readlen = fread(buf, 1, filelen, file);
     fclose(file);
     buf[readlen] = '\0';
-    lex->input = buf;
-    lex->inputlen = readlen;
-    lex->cur = lex->input[0];
+    if (len) *len = readlen;
+    return buf;
 }

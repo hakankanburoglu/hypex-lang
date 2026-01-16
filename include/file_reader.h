@@ -3,6 +3,6 @@
 
 #include "lexer.h"
 
-void file_read(Lexer *lex);
+char *file_read(const char *path, size_t *len);
 
 #endif // FILE_READER_H
