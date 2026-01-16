@@ -280,6 +280,7 @@ static void lex_ident(Lexer *lex, Token *tok) {
 
 static void lex_comment_newline(Lexer *lex, Token *tok) {
     push_token(lex, copy_token(tok));
+    free(tok->value);
     tok->value = NULL;
     tok->len = 0;
     push_token(lex, make_token(T_NEWLINE, lex->pos));
@@ -366,6 +367,7 @@ static void lex_fstring_body(Lexer *lex, Token *tok) {
 static void lex_rstring(Lexer *lex) {
     Token *last = lex->tokens.list[lex->tokens.len - 1];
     last->kind = T_RSTRING;
+    free(last->value);
     last->value = NULL;
     last->len = 0;
     next(lex);
@@ -433,12 +435,12 @@ void tokenize(Lexer *lex) {
                 continue;
             }
         }
-        Token *tok = make_token(T_UNKNOWN, lex->pos);
         if (lex->state == STATE_F_EXPR && lex->cur == '}') {
             lex->state = STATE_F_BODY;
             next(lex);
             continue;
         }
+        Token *tok = make_token(T_UNKNOWN, lex->pos);
         if (lex->state == STATE_F_BODY) {
             lex_fstring_body(lex, tok);
             continue;
