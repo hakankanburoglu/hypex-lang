@@ -6,13 +6,11 @@
 #include "error.h"
 #include "file_reader.h"
 #include "lexer.h"
-#include "parser.h"
 #include "token.h"
 
 #define LINE() printf("---------------------------------------------------------------------\n")
 
 int main(int argc, char *argv[]) {
-
     if (argc != 2) {
         printf("1 arguments were expected and %d were received\n", (argc - 1));
         return 1;
