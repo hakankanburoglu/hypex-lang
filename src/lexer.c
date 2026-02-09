@@ -642,6 +642,7 @@ void tokenize(Lexer *lex) {
         }
         push_token(lex, tok);
     }
+    push_token(lex, make_token(T_EOF, lex->pos));
 }
 
 void free_lex(Lexer *lex) {

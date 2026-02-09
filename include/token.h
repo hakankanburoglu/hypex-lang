@@ -75,7 +75,8 @@ enum {
     T_SPACE,
     T_INDENT,
     T_DEDENT,
-    T_NEWLINE
+    T_NEWLINE,
+    T_EOF
 };
 
 enum {
