@@ -11,7 +11,7 @@ typedef struct {
     size_t inputlen;
     char *file;
     struct {
-        Token **list;
+        hypex_token **list;
         size_t cap;
         size_t len;
     } tokens;
@@ -21,15 +21,15 @@ typedef struct {
         size_t len;
     } indents;
     int offset;
-    Pos pos;
+    hypex_pos pos;
     char cur;
     int state;
-} Lexer;
+} hypex_lexer;
 
-Lexer *make_lexer(void);
+hypex_lexer *hypex_lexer_make(void);
 
-void tokenize(Lexer *lex);
+void hypex_lexer_tokenize(hypex_lexer *lex);
 
-void free_lex(Lexer *lex);
+void hypex_lexer_free(hypex_lexer *lex);
 
 #endif // LEXER_H

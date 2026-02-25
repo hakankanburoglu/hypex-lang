@@ -6,26 +6,26 @@
 #include "parser.h"
 #include "token.h"
 
-void print_token_kind(int kind);
+void print_token_kind(hypex_token_kind kind);
 
-void print_keyword(int id);
+void print_keyword(hypex_keyword keyword);
 
-void print_base(int base);
+void print_base(hypex_num_base base);
 
-void print_token(Token tok);
+void print_token(hypex_token tok);
 
-void print_lexer(Lexer lex);
+void print_lexer(hypex_lexer lex);
 
-void print_node_kind(int kind);
+void print_node_kind(hypex_node_kind kind);
 
-void print_op(int op);
+void print_op(hypex_op op);
 
-void print_type_kind(int kind);
+void print_type_kind(hypex_type_kind kind);
 
-void print_type(Type *type);
+void print_type(hypex_type *type);
 
-void print_node(Node *node, int level, const char *tag);
+void print_node(hypex_node *node, int level, const char *tag);
 
-void print_parser(Parser p);
+void print_parser(hypex_parser p);
 
 #endif //DEBUG_H

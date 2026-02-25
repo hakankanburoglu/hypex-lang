@@ -16,27 +16,27 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    Lexer *lex = make_lexer();
-
     size_t pathlen = strlen(argv[1]);
     char *path = malloc(pathlen + 1);
-    if (!path) internal_error();
+    if (!path) hypex_internal_error();
     memcpy(path, argv[1], pathlen + 1);
 
+    hypex_lexer *lex = hypex_lexer_make();
     lex->file = path;
 
     size_t len = 0;
-    lex->input = file_read(path, &len);
+    lex->input = hypex_file_read(path, &len);
     lex->inputlen = len;
-    tokenize(lex);
+    lex->cur = lex->input[0];
+    hypex_lexer_tokenize(lex);
 
     LINE();
     printf("%s\n", lex->input);
     LINE();
 
-    print_lexer(*lex);
+    print_lexer(lex);
     
-    free_lex(lex);
+    hypex_lexer_free(lex);
 
     return 0;
 }

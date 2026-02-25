@@ -6,9 +6,9 @@
 #include "error.h"
 #include "token.h"
 
-Token *make_token(int kind, Pos pos) {
-    Token *tok = malloc(sizeof *tok);
-    if (!tok) internal_error();
+hypex_token *hypex_token_make(hypex_token_kind kind, hypex_pos pos) {
+    hypex_token *tok = malloc(sizeof *tok);
+    if (!tok) hypex_internal_error();
     tok->kind = kind;
     tok->value = NULL;
     tok->cap = 0;
@@ -17,8 +17,8 @@ Token *make_token(int kind, Pos pos) {
     return tok;
 }
 
-Token *copy_token(const Token *tok) {
-    Token *r = malloc(sizeof *r);
+hypex_token *copy_token(const hypex_token *tok) {
+    hypex_token *r = malloc(sizeof *r);
     if (!r) internal_error();
     r->kind = tok->kind;
     if (tok->value) {
@@ -30,18 +30,18 @@ Token *copy_token(const Token *tok) {
     r->len = tok->len;
     r->pos = tok->pos;
     switch (r->kind) {
-        case T_KEYWORD:
+        case HYPEX_TOK_KEYWORD:
             r->id = tok->id;
             break;
-        case T_INTEGER: case T_FLOAT:
+        case HYPEX_TOK_INTEGER: case HYPEX_TOK_FLOAT:
             r->num.base = tok->num.base;
             r->num.is_exp = tok->num.is_exp;
             r->num.is_neg = tok->num.is_neg;
             break;
-        case T_INDENT: case T_DEDENT:
+        case HYPEX_TOK_INDENT: case HYPEX_TOK_DEDENT:
             r->level = tok->level;
             break;
-        case T_NEWLINE:
+        case HYPEX_TOK_NEWLINE:
             r->comment = tok->comment;
             break;
         default:
@@ -50,7 +50,7 @@ Token *copy_token(const Token *tok) {
     return r;
 }
 
-void free_token(Token *tok) {
+void hypex_token_free(hypex_token *tok) {
     free(tok->value);
     free(tok);
 }

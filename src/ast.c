@@ -7,16 +7,16 @@
 #include "error.h"
 #include "token.h"
 
-Node *make_node(int kind, Node *parent) {
-    Node *node = malloc(sizeof *node);
+hypex_node *make_node(hypex_node_kind kind, hypex_node *parent) {
+    hypex_node *node = malloc(sizeof *node);
     if (!node) internal_error();
     node->kind = kind;
     node->parent = parent;
     return node; 
 }
 
-Type *make_type(int kind) {
-    Type *type = malloc(sizeof *type);
+hypex_type *hypex_type_make(hypex_type_kind kind) {
+    hypex_type *type = malloc(sizeof *type);
     if (!type) internal_error();
     type->kind = kind;
     type->types = NULL;
@@ -26,8 +26,8 @@ Type *make_type(int kind) {
     return type;
 }
 
-Type *copy_type(const Type *type) {
-    Type *r = malloc(sizeof *r);
+hypex_type *hypex_type_copy(const hypex_type *type) {
+    hypex_type *r = malloc(sizeof *r);
     if (!type) internal_error();
     r->kind = type->kind;
     r->types = type->types;
@@ -37,13 +37,13 @@ Type *copy_type(const Type *type) {
     return r;
 }
 
-Node *copy_node(const Node *node) {
-    Node *r = malloc(sizeof *r);
+hypex_node *hypex_node_copy(const hypex_node *node) {
+    hypex_node *r = malloc(sizeof *r);
     if (!r) internal_error();
     r->kind = node->kind;
     r->parent = node->parent;
     switch (node->kind) {
-        case NODE_SOURCE: case NODE_BLOCK:
+        case HYPEX_NODE_SOURCE: case HYPEX_NODE_BLOCK:
             r->data.block.body = malloc(sizeof *r->data.block.body * node->data.block.cap);
             if (!r->data.block.body) internal_error();
             for (int i = 0; i < node->data.block.len; i++)
@@ -51,28 +51,28 @@ Node *copy_node(const Node *node) {
             r->data.block.cap = node->data.block.cap;
             r->data.block.len = node->data.block.len;
             break;
-        case NODE_EXPR: case NODE_RET_STMT: case NODE_IF_STMT:
+        case HYPEX_NODE_EXPR: case HYPEX_NODE_RET_STMT: case HYPEX_NODE_IF_STMT:
             r->data.expr = node->data.expr;
             break;
-        case NODE_UNARY_OP:
+        case HYPEX_NODE_UNARY_OP:
             r->data.unary_op.op = node->data.unary_op.op;
             r->data.unary_op.operand = node->data.unary_op.operand;
             r->data.unary_op.prefix = node->data.unary_op.prefix;
             break;
-        case NODE_BINARY_OP:
+        case HYPEX_NODE_BINARY_OP:
             r->data.binary_op.op = node->data.binary_op.op;
             r->data.binary_op.left = node->data.binary_op.left;
             r->data.binary_op.right = node->data.binary_op.right;
             break;
-        case NODE_TERNARY_OP:
+        case HYPEX_NODE_TERNARY_OP:
             r->data.ternary_op.cond = node->data.ternary_op.cond;
             r->data.ternary_op.if_body = node->data.ternary_op.if_body;
             r->data.ternary_op.else_body = node->data.ternary_op.else_body;
             break;
-        case NODE_LITERAL: case NODE_IDENT:
+        case HYPEX_NODE_LITERAL: case HYPEX_NODE_IDENT:
             r->data.value = node->data.value;
             break;
-        case NODE_FUNC_DECL:
+        case HYPEX_NODE_FUNC_DECL:
             r->data.func_decl.ident = node->data.func_decl.ident;
             r->data.func_decl.type = copy_type(node->data.func_decl.type);
             r->data.func_decl.args = malloc(sizeof *r->data.func_decl.args * node->data.func_decl.args_cap);
@@ -83,12 +83,12 @@ Node *copy_node(const Node *node) {
             r->data.func_decl.args_len = node->data.func_decl.args_len;
             r->data.func_decl.body = node->data.func_decl.body;
             break;
-        case NODE_VAR_DECL:
+        case HYPEX_NODE_VAR_DECL:
             r->data.var_decl.ident = node->data.var_decl.ident;
             r->data.var_decl.type = copy_type(node->data.var_decl.type);
             r->data.var_decl.ident = node->data.var_decl.ident;
             break;
-        case NODE_CALL_EXPR: case NODE_ARG_DECL:
+        case HYPEX_NODE_CALL_EXPR: case HYPEX_NODE_ARG_DECL:
             r->data.call_expr.callee = malloc(sizeof *r->data.call_expr.callee * (node->data.call_expr.len + 1));
             if (!r->data.call_expr.callee) internal_error();
             strcpy(r->data.call_expr.callee, node->data.call_expr.callee);
@@ -105,6 +105,6 @@ Node *copy_node(const Node *node) {
     return r;
 }
 
-void free_node(Node *node) {
+void hypex_node_free(hypex_node *node) {
     free(node);
 }

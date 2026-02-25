@@ -6,173 +6,173 @@
 
 #include "token.h"
 
-enum {
-    NODE_SOURCE,
-    NODE_EXPR,
-    NODE_BLOCK,
-    NODE_UNARY_OP,
-    NODE_BINARY_OP,
-    NODE_TERNARY_OP,
-    NODE_LITERAL,
-    NODE_IDENT,
-    NODE_PAREN_GROUP,
-    NODE_FUNC_DECL,
-    NODE_ARG_DECL,
-    NODE_RET_STMT,
-    NODE_VAR_DECL,
-    NODE_CALL_EXPR,
-    NODE_IF_STMT
-};
+typedef enum {
+    HYPEX_NODE_SOURCE,
+    HYPEX_NODE_EXPR,
+    HYPEX_NODE_BLOCK,
+    HYPEX_NODE_UNARY_OP,
+    HYPEX_NODE_BINARY_OP,
+    HYPEX_NODE_TERNARY_OP,
+    HYPEX_NODE_LITERAL,
+    HYPEX_NODE_IDENT,
+    HYPEX_NODE_PAREN_GROUP,
+    HYPEX_NODE_FUNC_DECL,
+    HYPEX_NODE_ARG_DECL,
+    HYPEX_NODE_RET_STMT,
+    HYPEX_NODE_VAR_DECL,
+    HYPEX_NODE_CALL_EXPR,
+    HYPEX_NODE_IF_STMT
+} hypex_node_kind;
 
-enum {
+typedef enum {
     // PRE_UNARY
-    OP_NOT, // !
-    OP_BIT_NOT, // ~ 
-    OP_NEG, // -
-    OP_AMPER, // &
-    OP_PRE_INC, // ++x
-    OP_PRE_DEC, // --x
+    HYPEX_OP_NOT, // !
+    HYPEX_OP_BIT_NOT, // ~ 
+    HYPEX_OP_NEG, // -
+    HYPEX_OP_AMPER, // &
+    HYPEX_OP_PRE_INC, // ++x
+    HYPEX_OP_PRE_DEC, // --x
     // POST_UNARY
-    OP_POST_INC, // x++
-    OP_POST_DEC, // x--
+    HYPEX_OP_POST_INC, // x++
+    HYPEX_OP_POST_DEC, // x--
     // BINARY
-    OP_ACCESS, // .
-    OP_ASSIGN, // =
-    OP_ADD, // +
-    OP_SUB, // -
-    OP_MUL, // *
-    OP_DIV, // /
-    OP_MOD, // %
-    OP_A_ADD, // +=
-    OP_A_SUB, // -=
-    OP_A_MUL, // *=
-    OP_A_DIV, // /=
-    OP_A_MOD, // %=
-    OP_EQ, // ==
-    OP_NE, // !=
-    OP_LT, // <
-    OP_GT, // >
-    OP_LE, // <=
-    OP_GE, // >=
-    OP_BIT_AND, // &
-    OP_BIT_OR, // |
-    OP_AND, // &&
-    OP_OR, // ||
-    OP_XOR, // ^
-    OP_SHL, // <<
-    OP_SHR, // >>
-    OP_A_AND, // &=
-    OP_A_OR, // |=
-    OP_A_XOR, // ^=
-    OP_A_SHL, // <<=
-    OP_A_SHR, // >>=
+    HYPEX_OP_ACCESS, // .
+    HYPEX_OP_ASSIGN, // =
+    HYPEX_OP_ADD, // +
+    HYPEX_OP_SUB, // -
+    HYPEX_OP_MUL, // *
+    HYPEX_OP_DIV, // /
+    HYPEX_OP_MOD, // %
+    HYPEX_OP_A_ADD, // +=
+    HYPEX_OP_A_SUB, // -=
+    HYPEX_OP_A_MUL, // *=
+    HYPEX_OP_A_DIV, // /=
+    HYPEX_OP_A_MOD, // %=
+    HYPEX_OP_EQ, // ==
+    HYPEX_OP_NE, // !=
+    HYPEX_OP_LT, // <
+    HYPEX_OP_GT, // >
+    HYPEX_OP_LE, // <=
+    HYPEX_OP_GE, // >=
+    HYPEX_OP_BIT_AND, // &
+    HYPEX_OP_BIT_OR, // |
+    HYPEX_OP_AND, // &&
+    HYPEX_OP_OR, // ||
+    HYPEX_OP_XOR, // ^
+    HYPEX_OP_SHL, // <<
+    HYPEX_OP_SHR, // >>
+    HYPEX_OP_A_AND, // &=
+    HYPEX_OP_A_OR, // |=
+    HYPEX_OP_A_XOR, // ^=
+    HYPEX_OP_A_SHL, // <<=
+    HYPEX_OP_A_SHR, // >>=
     // TERNARY
-    OP_COND // ? :
-};
+    HYPEX_OP_COND // ? :
+} hypex_op;
 
-enum {
-    TYPE_NOTYPE,
-    TYPE_IDENT,
-    TYPE_INT,
-    TYPE_LONG,
-    TYPE_SHORT,
-    TYPE_FLOAT,
-    TYPE_DOUBLE,
-    TYPE_CHAR,
-    TYPE_UINT,
-    TYPE_ULONG,
-    TYPE_USHORT,
-    TYPE_BOOL,
-    TYPE_STRING,
-    TYPE_OBJECT,
-    TYPE_FUNC,
-    TYPE_ARRAY,
-    TYPE_FIXED_ARRAY,
-    TYPE_TUPLE,
-    TYPE_STRUCT,
-    TYPE_CLASS,
-    TYPE_IFACE,
-    TYPE_GENERIC
-};
+typedef enum {
+    HYPEX_TYPE_NOTYPE,
+    HYPEX_TYPE_IDENT,
+    HYPEX_TYPE_INT,
+    HYPEX_TYPE_LONG,
+    HYPEX_TYPE_SHORT,
+    HYPEX_TYPE_FLOAT,
+    HYPEX_TYPE_DOUBLE,
+    HYPEX_TYPE_CHAR,
+    HYPEX_TYPE_UINT,
+    HYPEX_TYPE_ULONG,
+    HYPEX_TYPE_USHORT,
+    HYPEX_TYPE_BOOL,
+    HYPEX_TYPE_STRING,
+    HYPEX_TYPE_OBJECT,
+    HYPEX_TYPE_FUNC,
+    HYPEX_TYPE_ARRAY,
+    HYPEX_TYPE_FIXED_ARRAY,
+    HYPEX_TYPE_TUPLE,
+    HYPEX_TYPE_STRUCT,
+    HYPEX_TYPE_CLASS,
+    HYPEX_TYPE_IFACE,
+    HYPEX_TYPE_GENERIC
+} hypex_type_kind;
 
-enum {
+typedef enum {
     FLAG_NONE = 0,
     FLAG_CONST = 1,
     FLAG_STAT = 2,
     FLAG_PRIV = 4,
     FLAG_PROT = 8,
     FLAG_REF = 16
-};
+} hypex_flag;
 
-typedef struct Type {
-    int kind;
-    struct Type **types;
+typedef struct hypex_type {
+    hypex_type_kind kind;
+    struct hypex_type **types;
     size_t cap;
     size_t len;
     int flags;
-} Type;
+} hypex_type;
 
-typedef struct Node {
-    int kind;
-    struct Node *parent;
+typedef struct hypex_node {
+    hypex_node_kind kind;
+    struct hypex_node *parent;
     union {
         struct {
-            struct Node **body;
+            struct hypex_node **body;
             size_t cap;
             size_t len;
         } block; // source, block
-        struct Node *expr; // expr, logic_expr, ret_stmt
+        struct hypex_node *expr; // expr, logic_expr, ret_stmt
         struct {
-            int op;
-            struct Node *operand;
+            hypex_op op;
+            struct hypex_node *operand;
             bool prefix;
         } unary_op;
         struct {
-            int op;
-            struct Node *left;
-            struct Node *right;
+            hypex_op op;
+            struct hypex_node *left;
+            struct hypex_node *right;
         } binary_op;
         struct {
-            struct Node *cond;
-            struct Node *if_body;
-            struct Node *else_body;
+            struct hypex_node *cond;
+            struct hypex_node *if_body;
+            struct hypex_node *else_body;
         } ternary_op;
-        Token *value; // literal, ident
+        hypex_token *value; // literal, ident
         struct {
-            Token *ident;
-            Type *type;
-            struct Node **args;
+            hypex_token *ident;
+            hypex_type *type;
+            struct hypex_node **args;
             size_t args_cap;
             size_t args_len;
-            struct Node *body;
+            struct hypex_node *body;
         } func_decl;
         struct {
-            Token *ident;
-            Type *type;
-            struct Node *init;
+            hypex_token *ident;
+            hypex_type *type;
+            struct hypex_node *init;
         } var_decl;
         struct {
             char *callee;
             size_t len;
-            struct Node **args;
+            struct hypex_node **args;
             size_t args_cap;
             size_t args_len;
         } call_expr;
         struct {
-            struct Node *if_body;
-            struct Node *else_body;
+            struct hypex_node *if_body;
+            struct hypex_node *else_body;
         } if_stmt;
     } data;
-} Node;
+} hypex_node;
 
-Node *make_node(int kind, Node *parent);
+hypex_node *hypex_node_make(hypex_node_kind kind, hypex_node *parent);
 
-Type *make_type(int kind);
+hypex_type *hypex_type_make(hypex_type_kind kind);
 
-Type *copy_type(const Type *type);
+hypex_type *hypex_type_copy(const hypex_type *type);
 
-Node *copy_node(const Node *node);
+hypex_node *hypex_node_copy(const hypex_node *node);
 
-void free_node(Node *node);
+void hypex_node_free(hypex_node *node);
 
 #endif // AST_H

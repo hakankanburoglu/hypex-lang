@@ -27,131 +27,131 @@ enum {
     STATE_F_EXPR
 };
 
-Lexer *make_lexer(void) {
-    Lexer *lex = malloc(sizeof *lex);
-    if (!lex) internal_error();
+hypex_lexer *hypex_lexer_make(void) {
+    hypex_lexer *lex = malloc(sizeof *lex);
+    if (!lex) hypex_internal_error();
     lex->input = NULL;
     lex->inputlen = 0;
     lex->file = NULL;
     lex->tokens.list = malloc(sizeof *lex->tokens.list * 16);
-    if (!lex->tokens.list) internal_error();
+    if (!lex->tokens.list) hypex_internal_error();
     lex->tokens.cap = 16;
     lex->tokens.len = 0;
     lex->indents.stack = malloc(sizeof *lex->indents.stack);
-    if (!lex->indents.stack) internal_error();
+    if (!lex->indents.stack) hypex_internal_error();
     lex->indents.cap = 1;
     lex->indents.len = 1;
     lex->indents.stack[0] = 0;
     lex->offset = 0;
-    lex->pos = (Pos){1, 1};
+    lex->pos = (hypex_pos){1, 1};
     lex->cur = '\0';
     lex->state = STATE_NONE;
     return lex;
 }
 
-static inline void init_number(Token *tok) {
-    tok->num.base = BASE_DEC;
+static inline void init_number(hypex_token *tok) {
+    tok->num.base = HYPEX_NUM_BASE_DEC;
     tok->num.is_exp = false;
     tok->num.is_neg = false;
 }
 
-static inline void push_token(Lexer *lex, Token *tok) {
+static inline void push_token(hypex_lexer *lex, hypex_token *tok) {
     if (lex->tokens.len == lex->tokens.cap) {
         lex->tokens.cap *= 2;
         lex->tokens.list = realloc(lex->tokens.list, sizeof *lex->tokens.list * lex->tokens.cap);
-        if (!lex->tokens.list) internal_error();
+        if (!lex->tokens.list) hypex_internal_error();
     }
     lex->tokens.list[lex->tokens.len++] = tok;
 }
 
-static void write_token(Token *tok, char c) {
+static void write_token(hypex_token *tok, char c) {
     if (!tok->value) {
         tok->cap = 16;
         tok->value = realloc(tok->value, sizeof *tok->value * 17);
-        if (!tok->value) internal_error();
+        if (!tok->value) hypex_internal_error();
     }
     if (tok->len == tok->cap) {
         tok->cap *= 2;
         tok->value = realloc(tok->value, sizeof *tok->value * (tok->cap + 1));
-        if (!tok->value) internal_error();
+        if (!tok->value) hypex_internal_error();
     }
     tok->value[tok->len++] = c;
     tok->value[tok->len] = '\0';
 }
 
-static inline void push_indent(Lexer *lex, int indent) {
+static inline void push_indent(hypex_lexer *lex, int indent) {
     if (lex->indents.len == lex->indents.cap) {
         lex->indents.cap *= 2;
         lex->indents.stack = realloc(lex->indents.stack, sizeof *lex->indents.stack * lex->indents.cap);
-        if (!lex->indents.stack) internal_error();
+        if (!lex->indents.stack) hypex_internal_error();
     }
     lex->indents.stack[lex->indents.len++] = indent;
 }
 
-static inline void pop_indent(Lexer *lex) {
-    if (lex->indents.len == 0) internal_error();
+static inline void pop_indent(hypex_lexer *lex) {
+    if (lex->indents.len == 0) hypex_internal_error();
     (lex->indents.len)--;
 }
 
-static inline int peek_indent(const Lexer *lex) {
-    if (lex->indents.len == 0) internal_error();
+static inline int peek_indent(const hypex_lexer *lex) {
+    if (lex->indents.len == 0) hypex_internal_error();
     return lex->indents.stack[lex->indents.len - 1];
 }
 
-static inline void clear_indent(Lexer *lex) {
+static inline void clear_indent(hypex_lexer *lex) {
     lex->indents.len = 1;
 }
 
-static inline bool empty_indent(const Lexer *lex) {
+static inline bool empty_indent(const hypex_lexer *lex) {
     return lex->indents.len == 1;
 }
 
-static inline Token *peek_token(const Lexer *lex) {
+static inline hypex_token *peek_token(const hypex_lexer *lex) {
     return lex->tokens.list[lex->tokens.len - 1];
 }
 
-static inline bool has_next(const Lexer *lex) {
+static inline bool has_next(const hypex_lexer *lex) {
     return lex->offset < lex->inputlen;
 }
 
-static inline void next(Lexer *lex) {
+static inline void next(hypex_lexer *lex) {
     lex->cur = lex->input[++lex->offset];
     lex->pos.column++;
 }
 
-static inline void consume(Lexer *lex, Token *tok) {
+static inline void consume(hypex_lexer *lex, hypex_token *tok) {
     write_token(tok, lex->cur);
     next(lex);
 }
 
-static inline void error_lexer(const Lexer *lex, const char *format, ...) {
+static inline void error_lexer(const hypex_lexer *lex, const char *format, ...) {
     va_list args;
     va_start(args, format);
-    error(lex->file, lex->pos.line, lex->pos.column, format, args);
+    hypex_error(lex->file, lex->pos.line, lex->pos.column, format, args);
     va_end(args);
 }
 
-static inline bool is_number(const Lexer *lex) {
+static inline bool is_number(const hypex_lexer *lex) {
     return isdigit(lex->cur);
 }
 
-static inline bool is_letter(const Lexer *lex) {
+static inline bool is_letter(const hypex_lexer *lex) {
     return isalpha(lex->cur);
 }
 
-static inline bool is_exponent(const Token *tok, char c) {
+static inline bool is_exponent(const hypex_token *tok, char c) {
     if (!tok->num.is_exp) {
-        if (tok->num.base == BASE_DEC && (c == 'e' || c == 'E')) return true;
-        return tok->num.base == BASE_HEX && (c == 'p' || c == 'P');
+        if (tok->num.base == HYPEX_NUM_BASE_DEC && (c == 'e' || c == 'E')) return true;
+        return tok->num.base == HYPEX_NUM_BASE_HEX && (c == 'p' || c == 'P');
     }
     return false;
 }
 
-static inline bool is_ident(const Lexer *lex) {
+static inline bool is_ident(const hypex_lexer *lex) {
     return isalnum(lex->cur) || lex->cur == '_';
 }
 
-static inline bool is_newline(Lexer *lex) {
+static inline bool is_newline(hypex_lexer *lex) {
     if (lex->cur == '\r') {
         next(lex);
         return true;
@@ -162,13 +162,13 @@ static inline bool is_newline(Lexer *lex) {
 static int match_base(char c) {
     switch (c) {
         case 'x': case 'X':
-            return BASE_HEX;
+            return HYPEX_NUM_BASE_HEX;
         case 'o': case 'O':
-            return BASE_OCT;
+            return HYPEX_NUM_BASE_OCT;
         case 'b': case 'B': 
-            return BASE_BIN;
+            return HYPEX_NUM_BASE_BIN;
         default:
-            return BASE_DEC;
+            return HYPEX_NUM_BASE_DEC;
     }
 }
 
@@ -181,14 +181,14 @@ static inline int match_keyword(const char *s) {
     return res ? (int)(res - KWLIST) : -1;
 }
 
-static inline void lex_operator(Lexer *lex, Token *tok, int kind) {
+static inline void lex_operator(hypex_lexer *lex, hypex_token *tok, hypex_token_kind kind) {
     tok->kind = kind;
     tok->len++;
     next(lex);
 }
 
-static void lex_number(Lexer *lex, Token *tok) {
-    tok->kind = T_INTEGER;
+static void lex_number(hypex_lexer *lex, hypex_token *tok) {
+    tok->kind = HYPEX_TOK_INTEGER;
     init_number(tok);
     consume(lex, tok);
     if (tok->value[0] == '0') {
@@ -214,8 +214,8 @@ static void lex_number(Lexer *lex, Token *tok) {
                 continue;
             }
         }
-        if (tok->kind != T_FLOAT && lex->cur == '.') {
-            tok->kind = T_FLOAT;
+        if (tok->kind != HYPEX_TOK_FLOAT && lex->cur == '.') {
+            tok->kind = HYPEX_TOK_FLOAT;
             consume(lex, tok);
             continue;
         }
@@ -225,48 +225,48 @@ static void lex_number(Lexer *lex, Token *tok) {
             continue;
         }
         switch (tok->num.base) {
-            case BASE_DEC:
+            case HYPEX_NUM_BASE_DEC:
                 if (isdigit(lex->cur)) {
                     consume(lex, tok);
                     continue;
                 }
                 break;
-            case BASE_HEX:
+            case HYPEX_NUM_BASE_HEX:
                 if (isxdigit(lex->cur)) {
                     consume(lex, tok);
                     continue;
                 }
                 break;
-            case BASE_OCT:
+            case HYPEX_NUM_BASE_OCT:
                 if (lex->cur >= '0' && lex->cur <= '7') {
                     consume(lex, tok);
                     continue;
                 }
                 break;
-            case BASE_BIN:
+            case HYPEX_NUM_BASE_BIN:
                 if (lex->cur == '0' || lex->cur == '1') {
                     consume(lex, tok);
                     continue;
                 }
                 break;
             default:
-                internal_error();
+                hypex_internal_error();
                 break;
         }
         break;
     }
-    if ( (tok->kind == T_FLOAT && tok->num.base == BASE_HEX && !tok->num.is_exp)
+    if ( (tok->kind == HYPEX_TOK_FLOAT && tok->num.base == HYPEX_NUM_BASE_HEX && !tok->num.is_exp)
         || (tok->value[tok->len - 1] == '_' || tok->value[tok->len - 1] == '.'))
         error_lexer(lex, "invalid number literal: %s", tok->value);
 }
 
-static void lex_ident(Lexer *lex, Token *tok) {
-    tok->kind = T_IDENT;
+static void lex_ident(hypex_lexer *lex, hypex_token *tok) {
+    tok->kind = HYPEX_TOK_IDENT;
     consume(lex, tok);
     while (is_ident(lex)) consume(lex, tok);
     const int id = match_keyword(tok->value);
     if (id != -1) {
-        tok->kind = T_KEYWORD;
+        tok->kind = HYPEX_TOK_KEYWORD;
         free(tok->value);
         tok->value = NULL;
         tok->id = id;
@@ -278,26 +278,26 @@ static void lex_ident(Lexer *lex, Token *tok) {
     }
 }
 
-static void lex_comment_newline(Lexer *lex, Token *tok) {
-    push_token(lex, copy_token(tok));
+static void lex_comment_newline(hypex_lexer *lex, hypex_token *tok) {
+    push_token(lex, hypex_token_copy(tok));
     free(tok->value);
     tok->value = NULL;
     tok->len = 0;
-    push_token(lex, make_token(T_NEWLINE, lex->pos));
+    push_token(lex, hypex_token_make(HYPEX_TOK_NEWLINE, lex->pos));
     lex->tokens.list[lex->tokens.len - 1]->comment = true;
     lex->pos.line++;
     lex->pos.column = 0;
     next(lex);
 }
 
-static void lex_comment_line(Lexer *lex, Token *tok) {
-    tok->kind = T_COMMENT_LINE;
+static void lex_comment_line(hypex_lexer *lex, hypex_token *tok) {
+    tok->kind = HYPEX_TOK_COMMENT_LINE;
     next(lex);
     while (has_next(lex) && !is_newline(lex)) consume(lex, tok);
 }
 
-static void lex_comment_block(Lexer *lex, Token *tok) {
-    tok->kind = T_COMMENT_BLOCK;
+static void lex_comment_block(hypex_lexer *lex, hypex_token *tok) {
+    tok->kind = HYPEX_TOK_COMMENT_BLOCK;
     next(lex);
     while (has_next(lex)) {
         if (is_newline(lex)) {
@@ -321,7 +321,7 @@ static void lex_comment_block(Lexer *lex, Token *tok) {
     }
 }
 
-static void lex_literal(Lexer *lex, Token *tok, char delim) {
+static void lex_literal(hypex_lexer *lex, hypex_token *tok, char delim) {
     bool escape = false;
     next(lex);
     while (has_next(lex) && (lex->cur != delim || escape)) {
@@ -336,8 +336,8 @@ static void lex_literal(Lexer *lex, Token *tok, char delim) {
     next(lex);
 }
 
-static void lex_fstring_body(Lexer *lex, Token *tok) {
-    tok->kind = T_FSTRING_BODY;
+static void lex_fstring_body(hypex_lexer *lex, hypex_token *tok) {
+    tok->kind = HYPEX_TOK_FSTRING_BODY;
     bool escape = false;
     bool done = false;
     while (has_next(lex)) {
@@ -359,14 +359,14 @@ static void lex_fstring_body(Lexer *lex, Token *tok) {
     }
     push_token(lex, tok);
     if (done) {
-        push_token(lex, make_token(T_FSTRING_END, lex->pos));
+        push_token(lex, hypex_token_make(HYPEX_TOK_FSTRING_END, lex->pos));
         next(lex);
     }
 }
 
-static void lex_rstring(Lexer *lex) {
-    Token *last = lex->tokens.list[lex->tokens.len - 1];
-    last->kind = T_RSTRING;
+static void lex_rstring(hypex_lexer *lex) {
+    hypex_token *last = lex->tokens.list[lex->tokens.len - 1];
+    last->kind = HYPEX_TOK_RSTRING;
     free(last->value);
     last->value = NULL;
     last->len = 0;
@@ -375,8 +375,8 @@ static void lex_rstring(Lexer *lex) {
     next(lex);
 }
 
-static void lex_indent(Lexer *lex, Token *tok) {
-    tok->kind = T_INDENT;
+static void lex_indent(hypex_lexer *lex, hypex_token *tok) {
+    tok->kind = HYPEX_TOK_INDENT;
     tok->level = 0;
     int peek = peek_indent(lex);
     if (tok->len > peek) {
@@ -385,7 +385,7 @@ static void lex_indent(Lexer *lex, Token *tok) {
         return;
     }
     if (tok->len < peek) {
-        tok->kind = T_DEDENT;
+        tok->kind = HYPEX_TOK_DEDENT;
         while (peek_indent(lex) > tok->len) {
             pop_indent(lex);
             tok->level++;
@@ -394,26 +394,26 @@ static void lex_indent(Lexer *lex, Token *tok) {
     }
 }
 
-static inline void lex_newline(Lexer *lex, Token *tok) {
-    tok->kind = T_NEWLINE;
+static inline void lex_newline(hypex_lexer *lex, hypex_token *tok) {
+    tok->kind = HYPEX_TOK_NEWLINE;
     tok->comment = false;
     lex->state = STATE_NEWL;
     next(lex);
 }
 
-static inline void lex_invalid(Lexer *lex) {
+static inline void lex_invalid(hypex_lexer *lex) {
     error_lexer(lex, "invalid character: '%c' (0x%x)", lex->cur, lex->cur);
     next(lex);
 }
 
-void tokenize(Lexer *lex) {
+void hypex_lexer_tokenize(hypex_lexer *lex) {
     while (has_next(lex)) {
         if (lex->state == STATE_NEWL) {
             lex->state = STATE_NONE;
             lex->pos.line++;
             lex->pos.column = 1;
             if (lex->cur != ' ' && !empty_indent(lex)) {
-                push_token(lex, make_token(T_DEDENT, lex->pos));
+                push_token(lex, hypex_token_make(HYPEX_TOK_DEDENT, lex->pos));
                 lex->tokens.list[lex->tokens.len - 1]->level = -1;
                 clear_indent(lex);
                 next(lex);
@@ -422,7 +422,7 @@ void tokenize(Lexer *lex) {
         if (lex->state == STATE_BEGIN_F) {
             lex->state = STATE_NONE;
             if (lex->cur == '"') {
-                push_token(lex, make_token(T_FSTRING_START, lex->pos));
+                push_token(lex, hypex_token_make(HYPEX_TOK_FSTRING_START, lex->pos));
                 lex->state = STATE_F_BODY;
                 next(lex);
                 continue;
@@ -440,49 +440,49 @@ void tokenize(Lexer *lex) {
             next(lex);
             continue;
         }
-        Token *tok = make_token(T_UNKNOWN, lex->pos);
+        hypex_token *tok = hypex_token_make(HYPEX_TOK_UNKNOWN, lex->pos);
         if (lex->state == STATE_F_BODY) {
             lex_fstring_body(lex, tok);
             continue;
         }
         switch (lex->cur) {
             case '=':
-                lex_operator(lex, tok, T_EQUAL);
+                lex_operator(lex, tok, HYPEX_TOK_EQUAL);
                 if (lex->cur == '=')
-                    lex_operator(lex, tok, T_TWO_EQ);
+                    lex_operator(lex, tok, HYPEX_TOK_TWO_EQ);
                 break;
             case '+':
-                lex_operator(lex, tok, T_PLUS);
+                lex_operator(lex, tok, HYPEX_TOK_PLUS);
                 switch (lex->cur) {
                     case '=':
-                        lex_operator(lex, tok, T_PLUS_EQ);
+                        lex_operator(lex, tok, HYPEX_TOK_PLUS_EQ);
                         break;
                     case '+':
-                        lex_operator(lex, tok, T_INCREASE);
+                        lex_operator(lex, tok, HYPEX_TOK_INCREASE);
                         break;
                 }
                 break;
             case '-':
-                lex_operator(lex, tok, T_MINUS);
+                lex_operator(lex, tok, HYPEX_TOK_MINUS);
                 switch (lex->cur) {
                     case '=':
-                        lex_operator(lex, tok, T_MINUS_EQ);
+                        lex_operator(lex, tok, HYPEX_TOK_MINUS_EQ);
                         break;
                     case '-':
-                        lex_operator(lex, tok, T_DECREASE);
+                        lex_operator(lex, tok, HYPEX_TOK_DECREASE);
                         break;
                 }
                 break;
             case '*':
-                lex_operator(lex, tok, T_STAR);
+                lex_operator(lex, tok, HYPEX_TOK_STAR);
                 if (lex->cur == '=')
-                    lex_operator(lex, tok, T_STAR_EQ);
+                    lex_operator(lex, tok, HYPEX_TOK_STAR_EQ);
                 break;
             case '/':
-                lex_operator(lex, tok, T_SLASH);
+                lex_operator(lex, tok, HYPEX_TOK_SLASH);
                 switch (lex->cur) {
                     case '=':
-                        lex_operator(lex, tok, T_SLASH_EQ);
+                        lex_operator(lex, tok, HYPEX_TOK_SLASH_EQ);
                         break;
                     case '/':
                         lex_comment_line(lex, tok);
@@ -493,140 +493,140 @@ void tokenize(Lexer *lex) {
                 }
                 break;
             case '<':
-                lex_operator(lex, tok, T_LESS);
+                lex_operator(lex, tok, HYPEX_TOK_LESS);
                 switch (lex->cur) {
                     case '=':
-                        lex_operator(lex, tok, T_LESS_EQ);
+                        lex_operator(lex, tok, HYPEX_TOK_LESS_EQ);
                         break;
                     case '<':
-                        lex_operator(lex, tok, T_LSHIFT);
+                        lex_operator(lex, tok, HYPEX_TOK_LSHIFT);
                         if (lex->cur == '=')
-                            lex_operator(lex, tok, T_LSHIFT_EQ);
+                            lex_operator(lex, tok, HYPEX_TOK_LSHIFT_EQ);
                         break;
                 }
                 break;
             case '>':
-                lex_operator(lex, tok, T_GREATER);
+                lex_operator(lex, tok, HYPEX_TOK_GREATER);
                 switch (lex->cur) {
                     case '=':
-                        lex_operator(lex, tok, T_GREATER_EQ);
+                        lex_operator(lex, tok, HYPEX_TOK_GREATER_EQ);
                         break;
                     case '>':
-                        lex_operator(lex, tok, T_RSHIFT);
+                        lex_operator(lex, tok, HYPEX_TOK_RSHIFT);
                         if (lex->cur == '=')
-                            lex_operator(lex, tok, T_RSHIFT_EQ);
+                            lex_operator(lex, tok, HYPEX_TOK_RSHIFT_EQ);
                         break;
                 }
                 break;
             case '&':
-                lex_operator(lex, tok, T_AMPER);
+                lex_operator(lex, tok, HYPEX_TOK_AMPER);
                 switch (lex->cur) {
                     case '=':
-                        lex_operator(lex, tok, T_AMPER_EQ);
+                        lex_operator(lex, tok, HYPEX_TOK_AMPER_EQ);
                         break;
                     case '&':
-                        lex_operator(lex, tok, T_TWO_AMPER);
+                        lex_operator(lex, tok, HYPEX_TOK_TWO_AMPER);
                         break;
                 }
                 break;
             case '|':
-                lex_operator(lex, tok, T_PIPE);
+                lex_operator(lex, tok, HYPEX_TOK_PIPE);
                 switch (lex->cur) {
                     case '=':
-                        lex_operator(lex, tok, T_PIPE_EQ);
+                        lex_operator(lex, tok, HYPEX_TOK_PIPE_EQ);
                         break;
                     case '|':
-                        lex_operator(lex, tok, T_TWO_PIPE);
+                        lex_operator(lex, tok, HYPEX_TOK_TWO_PIPE);
                         break;
                 }
                 break;
             case '!':
-                lex_operator(lex, tok, T_EXCLAMATION);
+                lex_operator(lex, tok, HYPEX_TOK_EXCLAMATION);
                 if (lex->cur == '=')
-                    lex_operator(lex, tok, T_EXCLAMATION_EQ);
+                    lex_operator(lex, tok, HYPEX_TOK_EXCLAMATION_EQ);
                 break;
             case '%':
-                lex_operator(lex, tok, T_PERCENT);
+                lex_operator(lex, tok, HYPEX_TOK_PERCENT);
                 if (lex->cur == '=')
-                    lex_operator(lex, tok, T_PERCENT_EQ);
+                    lex_operator(lex, tok, HYPEX_TOK_PERCENT_EQ);
                 break;
             case '.':
-                lex_operator(lex, tok, T_DOT);
+                lex_operator(lex, tok, HYPEX_TOK_DOT);
                 if (lex->cur == '.') {
-                    lex_operator(lex, tok, T_TWO_DOT);
+                    lex_operator(lex, tok, HYPEX_TOK_TWO_DOT);
                     if (lex->cur == '.')
-                        lex_operator(lex, tok, T_ELLIPSIS);
+                        lex_operator(lex, tok, HYPEX_TOK_ELLIPSIS);
                 }
                 break;
             case ',':
-                lex_operator(lex, tok, T_COMMA);
+                lex_operator(lex, tok, HYPEX_TOK_COMMA);
                 break;
             case ':':
-                lex_operator(lex, tok, T_COLON);
+                lex_operator(lex, tok, HYPEX_TOK_COLON);
                 break;
             case ';':
-                lex_operator(lex, tok, T_SEMI);
+                lex_operator(lex, tok, HYPEX_TOK_SEMI);
                 break;
             case '_':
-                lex_operator(lex, tok, T_UNDERSCORE);
+                lex_operator(lex, tok, HYPEX_TOK_UNDERSCORE);
                 if (is_ident(lex)) {
                     write_token(tok, '_');
                     lex_ident(lex, tok);
                 }
                 break;
             case '?':
-                lex_operator(lex, tok, T_QUEST);
+                lex_operator(lex, tok, HYPEX_TOK_QUEST);
                 break;
             case '(':
-                lex_operator(lex, tok, T_LPAR);
+                lex_operator(lex, tok, HYPEX_TOK_LPAR);
                 break;
             case ')':
-                lex_operator(lex, tok, T_RPAR);
+                lex_operator(lex, tok, HYPEX_TOK_RPAR);
                 break;
             case '[':
-                lex_operator(lex, tok, T_LSQB);
+                lex_operator(lex, tok, HYPEX_TOK_LSQB);
                 break;
             case ']':
-                lex_operator(lex, tok, T_RSQB);
+                lex_operator(lex, tok, HYPEX_TOK_RSQB);
                 break;
             case '{':
-                lex_operator(lex, tok, T_LBRACE);
+                lex_operator(lex, tok, HYPEX_TOK_LBRACE);
                 break;
             case '}':
-                lex_operator(lex, tok, T_RBRACE);
+                lex_operator(lex, tok, HYPEX_TOK_RBRACE);
                 break;
             case '^':
-                lex_operator(lex, tok, T_CARET);
+                lex_operator(lex, tok, HYPEX_TOK_CARET);
                 if (lex->cur == '=')
-                    lex_operator(lex, tok, T_CARET_EQ);
+                    lex_operator(lex, tok, HYPEX_TOK_CARET_EQ);
                 break;
             case '~':
-                lex_operator(lex, tok, T_TILDE);
+                lex_operator(lex, tok, HYPEX_TOK_TILDE);
                 break;
             case '@':
-                lex_operator(lex, tok, T_AT);
+                lex_operator(lex, tok, HYPEX_TOK_AT);
                 break;
             case '#': 
-                lex_operator(lex, tok, T_HASH);
+                lex_operator(lex, tok, HYPEX_TOK_HASH);
                 break;
             case '\\':
-                lex_operator(lex, tok, T_ESCAPE);
+                lex_operator(lex, tok, HYPEX_TOK_ESCAPE);
                 break;
             case ' ':
-                lex_operator(lex, tok, T_SPACE);
+                lex_operator(lex, tok, HYPEX_TOK_SPACE);
                 while (lex->cur == ' ') {
                     tok->len++;
                     next(lex);
                 }
-                if (peek_token(lex)->kind == T_NEWLINE)
+                if (peek_token(lex)->kind == HYPEX_TOK_NEWLINE)
                     lex_indent(lex, tok);
                 break;
             case '\'':
-                tok->kind = T_CHAR;
+                tok->kind = HYPEX_TOK_CHAR;
                 lex_literal(lex, tok, '\'');
                 break;
             case '"':
-                tok->kind = T_STRING;
+                tok->kind = HYPEX_TOK_STRING;
                 lex_literal(lex, tok, '"');
                 break;
             default:
@@ -642,15 +642,15 @@ void tokenize(Lexer *lex) {
         }
         push_token(lex, tok);
     }
-    push_token(lex, make_token(T_EOF, lex->pos));
+    push_token(lex, hypex_token_make(HYPEX_TOK_EOF, lex->pos));
 }
 
-void free_lex(Lexer *lex) {
+void hypex_lexer_free(hypex_lexer *lex) {
     if(!lex) return;
     free(lex->input);
     free(lex->file);
     for (int i = 0; i < lex->tokens.len; i++)
-        free_token(lex->tokens.list[i]);
+        hypex_token_free(lex->tokens.list[i]);
     free(lex->tokens.list);
     free(lex->indents.stack);
     free(lex);

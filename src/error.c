@@ -6,7 +6,7 @@
 
 #include "error.h"
 
-noreturn void fatal_error(const char *format, ...) {
+noreturn void hypex_fatal_error(const char *format, ...) {
     va_list args;
     va_start(args, format);
     vfprintf(stderr, format, args);
@@ -15,7 +15,7 @@ noreturn void fatal_error(const char *format, ...) {
     exit(EXIT_FAILURE);
 }
 
-void error(const char *file, int line, int column, const char *format, ...) {
+void hypex_error(const char *file, int line, int column, const char *format, ...) {
     va_list args;
     va_start(args, format);
     if (file) fprintf(stderr, "%s:", file);
@@ -25,7 +25,7 @@ void error(const char *file, int line, int column, const char *format, ...) {
     va_end(args);
 }
 
-noreturn void internal_error(void) {
+noreturn void hypex_internal_error(void) {
     fprintf(stderr, "internal compiler error\n");
     exit(EXIT_FAILURE);
 }

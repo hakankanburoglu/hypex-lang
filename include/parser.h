@@ -8,18 +8,18 @@
 #include "token.h"
 
 typedef struct {
-    Token **tok_list;
+    hypex_token **tok_list;
     size_t toklen;
-    Node *expr;
+    hypex_node *expr;
     char *file;
     int offset;
-    Token *tok;
-} Parser;
+    hypex_token *tok;
+} hypex_parser;
 
-Parser *make_parser(Lexer *lex);
+hypex_parser *hypex_parser_make(hypex_lexer *lex);
 
-void parse(Parser *p);
+void hypex_parser_parse(hypex_parser *p);
 
-void free_parser(Parser *p);
+void hypex_parser_free(hypex_parser *p);
 
 #endif // PARSER_H
