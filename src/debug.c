@@ -14,7 +14,7 @@ static inline const char *file_name(const char *file) {
     return res ? res + 1 : file;
 }
 
-void print_token_kind(int kind) {
+void print_token_kind(hypex_token_kind kind) {
     switch (kind) {
         case HYPEX_TOK_UNKNOWN: printf("UNKNOWN"); break;
         case HYPEX_TOK_EQUAL: printf("EQUAL"); break;
@@ -88,8 +88,8 @@ void print_token_kind(int kind) {
     }
 }
 
-void print_keyword(int id) {
-    switch (id) {
+void print_keyword(hypex_keyword keyword) {
+    switch (keyword) {
         case HYPEX_KW_ASYNC: printf("KW_ASYNC"); break;
         case HYPEX_KW_AWAIT: printf("KW_AWAIT"); break;
         case HYPEX_KW_BASE: printf("KW_BASE"); break;
@@ -133,11 +133,11 @@ void print_keyword(int id) {
         case HYPEX_KW_VAR: printf("KW_VAR"); break;
         case HYPEX_KW_WHILE: printf("KW_WHILE"); break;
         case HYPEX_KW_YIELD: printf("KW_YIELD"); break;
-        default: printf("_KW_%d", id); break;
+        default: printf("_KW_%d", keyword); break;
     }
 }
 
-void print_base(int base) {
+void print_base(hypex_num_base base) {
     switch (base) {
         case HYPEX_NUM_BASE_DEC: printf("dec"); break;
         case HYPEX_NUM_BASE_HEX: printf("hex"); break;
@@ -191,7 +191,7 @@ void print_lexer(const hypex_lexer *lex) {
     printf("\n\n");
 }
 
-void print_node_kind(int kind) {
+void print_node_kind(hypex_node_kind kind) {
     switch (kind) {
         case HYPEX_NODE_SOURCE: printf("source"); break;
         case HYPEX_NODE_EXPR: printf("expr"); break;
@@ -211,7 +211,7 @@ void print_node_kind(int kind) {
     }
 }
 
-void print_op(int op) {
+void print_op(hypex_op op) {
     switch (op) {
         case HYPEX_OP_NOT: printf("not"); break;
         case HYPEX_OP_BIT_NOT: printf("bit_not"); break;
