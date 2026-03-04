@@ -12,9 +12,9 @@ void print_keyword(hypex_keyword keyword);
 
 void print_base(hypex_num_base base);
 
-void print_token(hypex_token tok);
+void print_token(const hypex_token *tok);
 
-void print_lexer(hypex_lexer lex);
+void print_lexer(const hypex_lexer *lex);
 
 void print_node_kind(hypex_node_kind kind);
 
@@ -28,4 +28,4 @@ void print_node(hypex_node *node, int level, const char *tag);
 
 void print_parser(hypex_parser p);
 
-#endif //DEBUG_H
+#endif // DEBUG_H
