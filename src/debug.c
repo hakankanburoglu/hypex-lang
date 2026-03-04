@@ -14,7 +14,7 @@ static inline const char *file_name(const char *file) {
     return res ? res + 1 : file;
 }
 
-void print_token_kind(hypex_token_kind kind) {
+void print_token_kind(int kind) {
     switch (kind) {
         case HYPEX_TOK_UNKNOWN: printf("UNKNOWN"); break;
         case HYPEX_TOK_EQUAL: printf("EQUAL"); break;
@@ -83,17 +83,19 @@ void print_token_kind(hypex_token_kind kind) {
         case HYPEX_TOK_INDENT: printf("INDENT"); break;
         case HYPEX_TOK_DEDENT: printf("DEDENT"); break;
         case HYPEX_TOK_NEWLINE: printf("NEWLINE"); break;
+        case HYPEX_TOK_EOF: printf("EOF"); break;
         default: printf("_T_%d", kind); break;
     }
 }
 
-void print_keyword(hypex_keyword keyword) {
-    switch (keyword) {
+void print_keyword(int id) {
+    switch (id) {
         case HYPEX_KW_ASYNC: printf("KW_ASYNC"); break;
         case HYPEX_KW_AWAIT: printf("KW_AWAIT"); break;
         case HYPEX_KW_BASE: printf("KW_BASE"); break;
         case HYPEX_KW_BOOL: printf("KW_BOOL"); break;
         case HYPEX_KW_BREAK: printf("KW_BREAK"); break;
+        case HYPEX_KW_BYTE: printf("KW_BYTE"); break;
         case HYPEX_KW_CASE: printf("KW_CASE"); break;
         case HYPEX_KW_CATCH: printf("KW_CATCH"); break;
         case HYPEX_KW_CHAR: printf("KW_CHAR"); break;
@@ -115,6 +117,7 @@ void print_keyword(hypex_keyword keyword) {
         case HYPEX_KW_NULL: printf("KW_NULL"); break;
         case HYPEX_KW_OBJECT: printf("KW_OBJECT"); break;
         case HYPEX_KW_RETURN: printf("KW_RETURN"); break;
+        case HYPEX_KW_SBYTE: printf("KW_SBYTE"); break;
         case HYPEX_KW_SELF: printf("KW_SELF"); break;
         case HYPEX_KW_SHORT: printf("KW_SHORT"); break;
         case HYPEX_KW_STRING: printf("KW_STRING"); break;
@@ -130,11 +133,11 @@ void print_keyword(hypex_keyword keyword) {
         case HYPEX_KW_VAR: printf("KW_VAR"); break;
         case HYPEX_KW_WHILE: printf("KW_WHILE"); break;
         case HYPEX_KW_YIELD: printf("KW_YIELD"); break;
-        default: printf("_HYPEX_KW_%d", keyword); break;
+        default: printf("_KW_%d", id); break;
     }
 }
 
-void print_base(hypex_num_base base) {
+void print_base(int base) {
     switch (base) {
         case HYPEX_NUM_BASE_DEC: printf("dec"); break;
         case HYPEX_NUM_BASE_HEX: printf("hex"); break;
@@ -144,34 +147,42 @@ void print_base(hypex_num_base base) {
     }
 }
 
-void print_token(hypex_token tok) {
-    printf("%d:%d ", tok.pos.line, tok.pos.column);
-    tok.kind != HYPEX_TOK_KEYWORD ? print_token_kind(tok.kind) : print_keyword(tok.id);
-    if (tok.value) printf(" `%s`", tok.value);
-    if (tok.kind == HYPEX_TOK_INTEGER || tok.kind == HYPEX_TOK_FLOAT) {
-        if (tok.num.base != 0) {
+void print_token(const hypex_token *tok) {
+    if (!tok) {
+        printf("null\n");
+        return;
+    }
+    printf("%d:%d ", tok->pos.line, tok->pos.column);
+    tok->kind != HYPEX_TOK_KEYWORD ? print_token_kind(tok->kind) : print_keyword(tok->id);
+    if (tok->value) printf(" `%s`", tok->value);
+    if (tok->kind == HYPEX_TOK_INTEGER || tok->kind == HYPEX_TOK_FLOAT) {
+        if (tok->num.base != 0) {
             printf(" base:");
-            print_base(tok.num.base);
+            print_base(tok->num.base);
         }
-        if (tok.num.is_exp) {
-            if (tok.num.is_neg) printf(" (neg_exp)");
+        if (tok->num.is_exp) {
+            if (tok->num.is_neg) printf(" (neg_exp)");
             else printf(" (exp)");
         }
     }
-    if (tok.kind == HYPEX_TOK_NEWLINE && tok.comment) printf(" (comment)");
-    if (tok.kind == HYPEX_TOK_INDENT || tok.kind == HYPEX_TOK_DEDENT) printf(" level:%d", tok.level);
-    printf(" len:%d\n", tok.len);
+    if (tok->kind == HYPEX_TOK_NEWLINE && tok->comment) printf(" (comment)");
+    if (tok->kind == HYPEX_TOK_INDENT || tok->kind == HYPEX_TOK_DEDENT) printf(" level:%d", tok->level);
+    printf(" len:%zu\n", tok->len);
 }
 
-void print_lexer(hypex_lexer lex) {
-    for (int i = 0; i < lex.tokens.len; i++)
-        print_token(*(lex.tokens.list[i]));
-    printf("\nresults: total=%d ind=", lex.tokens.len);
-    if (lex.indents.stack) {
+void print_lexer(const hypex_lexer *lex) {
+    if (!lex) {
+        printf("\n");
+        return;
+    }
+    for (size_t i = 0; i < lex->tokens.len; i++)
+        print_token(lex->tokens.list[i]);
+    printf("\nresults: total=%zu ind=", lex->tokens.len);
+    if (lex->indents.stack) {
         printf("{");
-        for (int i = 0; i < lex.indents.len; i++) {
-            printf("%d", lex.indents.stack[i]);
-            if (i != lex.indents.len - 1) printf(", ");
+        for (size_t i = 0; i < lex->indents.len; i++) {
+            printf("%d", lex->indents.stack[i]);
+            if (i != lex->indents.len - 1) printf(", ");
         }
         printf("}");
     } else {
@@ -180,7 +191,7 @@ void print_lexer(hypex_lexer lex) {
     printf("\n\n");
 }
 
-void print_node_kind(hypex_node_kind kind) {
+void print_node_kind(int kind) {
     switch (kind) {
         case HYPEX_NODE_SOURCE: printf("source"); break;
         case HYPEX_NODE_EXPR: printf("expr"); break;
@@ -200,14 +211,14 @@ void print_node_kind(hypex_node_kind kind) {
     }
 }
 
-void print_op(hypex_op op) {
+void print_op(int op) {
     switch (op) {
         case HYPEX_OP_NOT: printf("not"); break;
         case HYPEX_OP_BIT_NOT: printf("bit_not"); break;
         case HYPEX_OP_NEG: printf("neg"); break;
+        case HYPEX_OP_AMPER: printf("amper"); break;
         case HYPEX_OP_PRE_INC: printf("pre_inc"); break;
         case HYPEX_OP_PRE_DEC: printf("pre_dec"); break;
-        case HYPEX_OP_AMPER: printf("amper"); break;
         case HYPEX_OP_POST_INC: printf("post_inc"); break;
         case HYPEX_OP_POST_DEC: printf("post_dec"); break;
         case HYPEX_OP_ACCESS: printf("access"); break;
